@@ -198,8 +198,9 @@ func (r *Results) Filter(userinput string) {
 
 	// Filter
 	for _, res := range initialset {
-		res.score, res.highlighted = score2(res.contents, userinput)
-		if true { //res.score > 0 {
+		best := score2(res.contents, userinput)
+		res.score, res.highlighted = best.score, best.highlight
+		if res.score > 0 {
 			r.results = append(r.results, res)
 			r.result_count++
 		}

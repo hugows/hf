@@ -168,14 +168,15 @@ func charsToMap(chars []int) map[int]bool {
 	return highlight
 }
 
-func score2(line string, input string) (finalscore int, finalh map[int]bool) { //(best *BestScore) {
-	// fmt.Println(line, input)
+func score2(line string, input string) (best *BestScore) {
 	matchers := make([]*Matcher, 0, 1)
+	best = new(BestScore)
+
 	x := new(Matcher)
 	matchers = append(matchers, x)
 
 	if len(input) > len(line) || len(input) == 0 || len(line) == 0 {
-		finalscore = -1
+		best.score = -1
 		return
 	}
 
@@ -253,8 +254,6 @@ Outer:
 		}
 	}
 
-	best := new(BestScore)
-
 	first := true
 	for _, m := range matchers {
 		if !m.complete_match {
@@ -263,15 +262,12 @@ Outer:
 
 		score := 100 + (len(input)-m.groups)*10 - m.total_distance + m.lenlongestgroup
 
-		if first || score >= best.score { //m.groups < best.groups || (m.groups == best.groups && m.total_distance < best.distance) {
+		if first || score > best.score {
 			first = false
 			best.highlight = charsToMap(m.chars)
 			best.groups = m.groups
 			best.distance = m.total_distance
 			best.score = score
-
-			finalscore = score
-			finalh = best.highlight
 		}
 	}
 

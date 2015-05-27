@@ -68,7 +68,12 @@ func main() {
 	var statusline Statusline
 	var results Results
 
-	err := termbox.Init()
+	_, err := os.Open(getRoot())
+	if err != nil {
+		panic(err)
+	}
+
+	err = termbox.Init()
 	if err != nil {
 		panic(err)
 	}
@@ -105,6 +110,9 @@ func main() {
 	results.CopyAll()
 	results.Draw()
 	termbox.Flush()
+
+	// Command name is:
+	// os.Args[0]
 
 	for {
 		switch ev := termbox.PollEvent(); ev.Type {
@@ -157,4 +165,5 @@ func main() {
 		results.Draw()
 		termbox.Flush()
 	}
+
 }
