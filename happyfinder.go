@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/nsf/termbox-go"
 )
@@ -24,7 +26,7 @@ var cmd = flag.String("cmd", "vim", "command to run")
 
 // const modeline_width = 30
 
-func redraw_all(modeline Modeline) {
+func redraw_all(modeline Modeline, t time.Time) {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
 	w, h := termbox.Size()
@@ -46,6 +48,10 @@ func redraw_all(modeline Modeline) {
 	modeline.Draw(2, h-1, w-2, 1)
 	termbox.SetCursor(2+modeline.CursorX(), h-1)
 
+	s := fmt.Sprint(time.Since(t))
+
+	tbprint(10, h-2, w-2, termbox.ColorDefault|termbox.AttrReverse, termbox.ColorDefault, s)
+
 	//tbprint(0, h-1, coldef, coldef, "Press ESC to quit")
 }
 
@@ -60,6 +66,8 @@ func runCmdWithArgs(f string) {
 		log.Fatal(err)
 	}
 }
+
+const pauseAfterKeypress = (500 * time.Millisecond)
 
 func main() {
 	flag.Parse()
@@ -79,11 +87,11 @@ func main() {
 	}
 	termbox.SetInputMode(termbox.InputEsc)
 
-	files := walkFiles(getRoot())
+	fileChan := walkFiles(getRoot())
 
-	for filename := range files {
-		results.Insert(filename)
-	}
+	// for filename := range fileChan {
+	// results.Insert(<-fileChan)
+	// }
 
 	// 	a, b := score(filexname, flag.Arg(1))
 	// 	if a >= 0 && a < 100 {
@@ -103,63 +111,108 @@ func main() {
 	// 	}
 	// }
 
+	var timeLastUser time.Time
+	resultsQueue := make([]string, 0, 100)
+
 	w, h := termbox.Size()
-	redraw_all(modeline)
+	redraw_all(modeline, timeLastUser)
 	statusline.Draw(0, h-2, w, &results)
 	results.SetSize(0, 0, w, h-2)
 	results.CopyAll()
 	results.Draw()
 	termbox.Flush()
 
+	termboxEventChan := make(chan termbox.Event)
+
+	go func() {
+		for {
+			termboxEventChan <- termbox.PollEvent()
+		}
+	}()
+
+	timer := time.NewTimer(1 * time.Hour)
+
 	// Command name is:
 	// os.Args[0]
 
+	var r string
+
 	for {
-		switch ev := termbox.PollEvent(); ev.Type {
-		case termbox.EventKey:
-			switch ev.Key {
-			case termbox.KeyEsc, termbox.KeyCtrlC:
-				termbox.Close()
-				return
-			case termbox.KeyEnter:
-				termbox.Close()
-				// runCmdWithArgs(results.FormatSelected())
-				return
-			case termbox.KeyCtrlT:
-				results.ToggleMarkAll()
-			case termbox.KeyArrowUp, termbox.KeyCtrlP:
-				results.SelectPrevious()
-			case termbox.KeyArrowDown, termbox.KeyCtrlN:
-				results.SelectNext()
-			case termbox.KeyArrowLeft, termbox.KeyCtrlB:
-				modeline.MoveCursorOneRuneBackward()
-			case termbox.KeyArrowRight, termbox.KeyCtrlF:
-				modeline.MoveCursorOneRuneForward()
-			case termbox.KeyBackspace, termbox.KeyBackspace2:
-				modeline.DeleteRuneBackward()
-				results.Filter(modeline.Contents())
-			case termbox.KeyDelete, termbox.KeyCtrlD:
-				modeline.DeleteRuneForward()
-				results.Filter(modeline.Contents())
-			case termbox.KeySpace:
-				results.ToggleMark()
-			case termbox.KeyCtrlK:
-				modeline.DeleteTheRestOfTheLine()
-				results.Filter(modeline.Contents())
-			case termbox.KeyHome, termbox.KeyCtrlA:
-				modeline.MoveCursorToBeginningOfTheLine()
-			case termbox.KeyEnd, termbox.KeyCtrlE:
-				modeline.MoveCursorToEndOfTheLine()
-			default:
-				if ev.Ch != 0 {
-					modeline.InsertRune(ev.Ch)
-					results.Filter(modeline.Contents())
-				}
+		select {
+		case <-timer.C:
+			for len(resultsQueue) > 0 {
+				r, resultsQueue = resultsQueue[len(resultsQueue)-1], resultsQueue[:len(resultsQueue)-1]
+				results.Insert(r)
 			}
-		case termbox.EventError:
-			panic(ev.Err)
+			resultsQueue = nil
+			results.Filter(modeline.Contents())
+			timer = time.NewTimer(1 * time.Hour)
+
+		case filename, ok := <-fileChan:
+			if ok {
+				if time.Since(timeLastUser) > pauseAfterKeypress {
+					results.Insert(filename)
+					results.Filter(modeline.Contents())
+				} else {
+					resultsQueue = append(resultsQueue, filename)
+				}
+			} else {
+				fileChan = nil
+			}
+
+		case ev := <-termboxEventChan:
+			timeLastUser = time.Now()
+			if fileChan != nil {
+				timer.Reset(pauseAfterKeypress)
+			}
+
+			switch ev.Type {
+			case termbox.EventKey:
+				switch ev.Key {
+				case termbox.KeyEsc, termbox.KeyCtrlC:
+					termbox.Close()
+					return
+				case termbox.KeyEnter:
+					termbox.Close()
+					// runCmdWithArgs(results.FormatSelected())
+					return
+				case termbox.KeyCtrlT:
+					results.ToggleMarkAll()
+				case termbox.KeyArrowUp, termbox.KeyCtrlP:
+					results.SelectPrevious()
+				case termbox.KeyArrowDown, termbox.KeyCtrlN:
+					results.SelectNext()
+				case termbox.KeyArrowLeft, termbox.KeyCtrlB:
+					modeline.MoveCursorOneRuneBackward()
+				case termbox.KeyArrowRight, termbox.KeyCtrlF:
+					modeline.MoveCursorOneRuneForward()
+				case termbox.KeyBackspace, termbox.KeyBackspace2:
+					modeline.DeleteRuneBackward()
+					results.Filter(modeline.Contents())
+				case termbox.KeyDelete, termbox.KeyCtrlD:
+					modeline.DeleteRuneForward()
+					results.Filter(modeline.Contents())
+				case termbox.KeySpace:
+					results.ToggleMark()
+				case termbox.KeyCtrlK:
+					modeline.DeleteTheRestOfTheLine()
+					results.Filter(modeline.Contents())
+				case termbox.KeyHome, termbox.KeyCtrlA:
+					modeline.MoveCursorToBeginningOfTheLine()
+				case termbox.KeyEnd, termbox.KeyCtrlE:
+					modeline.MoveCursorToEndOfTheLine()
+				default:
+					if ev.Ch != 0 {
+						modeline.InsertRune(ev.Ch)
+						results.Filter(modeline.Contents())
+					}
+				}
+			case termbox.EventError:
+				panic(ev.Err)
+			}
 		}
-		redraw_all(modeline)
+
+		redraw_all(modeline, timeLastUser)
 		statusline.Draw(0, h-2, w, &results)
 
 		results.Draw()

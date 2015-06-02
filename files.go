@@ -7,7 +7,8 @@ import (
 
 // Recursively outputs each file in the root directory
 func walkFiles(root string) <-chan string {
-	out := make(chan string)
+	out := make(chan string, 1000)
+
 	go func() {
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -32,7 +33,10 @@ func walkFiles(root string) <-chan string {
 
 			return nil
 		})
+
 		close(out)
+
 	}()
+
 	return out
 }

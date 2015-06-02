@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/nsf/termbox-go"
 )
@@ -119,6 +118,9 @@ func (r *Results) Insert(s string) {
 	r.result_count++
 }
 
+func (r *Results) Queue(s string) {
+}
+
 func tbprint(x, y, w int, fg, bg termbox.Attribute, msg string) {
 	for _, c := range msg {
 		termbox.SetCell(x, y, c, fg, bg)
@@ -168,6 +170,7 @@ func (r *Results) CopyAll() {
 }
 
 func (r *Results) Filter(userinput string) {
+
 	if len(userinput) == 0 {
 		r.results = r.allresults
 		r.result_count = len(r.allresults)
@@ -183,15 +186,16 @@ func (r *Results) Filter(userinput string) {
 	initialset := r.allresults
 
 	// Optimization
-	if len(r.lastuserinput) > 0 && strings.HasPrefix(userinput, r.lastuserinput) {
-		initialset = r.results
-		if len(r.results) == 0 {
-			r.result_count = 0
-			r.SelectFirst()
-			return
-		}
-	}
-	r.lastuserinput = userinput
+	// Now invalid because results are changing...
+	// if len(r.lastuserinput) > 0 && strings.HasPrefix(userinput, r.lastuserinput) {
+	// 	initialset = r.results
+	// 	if len(r.results) == 0 {
+	// 		r.result_count = 0
+	// 		r.SelectFirst()
+	// 		return
+	// 	}
+	// }
+	// r.lastuserinput = userinput
 
 	r.results = make([]*Result, 0, 100)
 	r.result_count = 0
