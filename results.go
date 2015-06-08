@@ -170,7 +170,6 @@ func (r *Results) CopyAll() {
 }
 
 func (r *Results) Filter(userinput string) {
-
 	if len(userinput) == 0 {
 		r.results = r.allresults
 		r.result_count = len(r.allresults)

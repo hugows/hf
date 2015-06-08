@@ -48,9 +48,9 @@ func redraw_all(modeline Modeline, t time.Time) {
 	modeline.Draw(2, h-1, w-2, 1)
 	termbox.SetCursor(2+modeline.CursorX(), h-1)
 
-	s := fmt.Sprint(time.Since(t))
+	// s := fmt.Sprint(time.Since(t))
 
-	tbprint(10, h-2, w-2, termbox.ColorDefault|termbox.AttrReverse, termbox.ColorDefault, s)
+	// tbprint(10, h-2, w-2, termbox.ColorDefault|termbox.AttrReverse, termbox.ColorDefault, s)
 
 	//tbprint(0, h-1, coldef, coldef, "Press ESC to quit")
 }
@@ -67,7 +67,7 @@ func runCmdWithArgs(f string) {
 	}
 }
 
-const pauseAfterKeypress = (500 * time.Millisecond)
+const pauseAfterKeypress = (1500 * time.Millisecond)
 
 func main() {
 	flag.Parse()
@@ -76,9 +76,16 @@ func main() {
 	var statusline Statusline
 	var results Results
 
-	_, err := os.Open(getRoot())
+	root := getRoot()
+	fi, err := os.Stat(root)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		return
+	}
+
+	if !fi.IsDir() {
+		fmt.Println(root, "is NOT a folder")
+		return
 	}
 
 	err = termbox.Init()
