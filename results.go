@@ -3,15 +3,17 @@ package main
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/nsf/termbox-go"
 )
 
 type Result struct {
-	contents    string
-	highlighted map[int]bool
-	marked      bool
-	score       int
+	contents        string       // user input is matched against lowercase version
+	displayContents string       // original filename (or line) to display
+	highlighted     map[int]bool // hashmap of the characters to be highlighted
+	marked          bool         // true when the current line is selected
+	score           int          // what is the score for this particular result?
 }
 
 func (res Result) Draw(x, y, w int, selected bool) {
@@ -20,7 +22,6 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	color := coldef
 	if selected {
 		color = coldef | termbox.AttrReverse
-		// color = termbox.ColorRed | termbox.AttrReverse
 	}
 
 	line := ""
@@ -33,7 +34,7 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	tbprint(x, y, color, color, line)
 	x += len(line)
 
-	for idx, c := range res.contents {
+	for idx, c := range res.displayContents {
 		fg := color
 		if res.highlighted[idx] {
 			fg = termbox.ColorGreen | termbox.ColorDefault | termbox.AttrBold
@@ -42,8 +43,6 @@ func (res Result) Draw(x, y, w int, selected bool) {
 		x++
 	}
 
-	// c := termbox.Cell{Ch: ' ', Fg: color, Bg: color}
-	// fill(x, y, w, 1, c)
 	tclear(x, y, w, 1)
 }
 
@@ -115,7 +114,8 @@ func (r *Results) SelectNext() {
 
 func (r *Results) Insert(s string) {
 	result := new(Result)
-	result.contents = s
+	result.contents = strings.ToLower(s)
+	result.displayContents = s
 	r.allresults = append(r.allresults, result)
 	r.result_count++
 }
