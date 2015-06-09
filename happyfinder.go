@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"time"
-
 	"github.com/nsf/termbox-go"
 )
 

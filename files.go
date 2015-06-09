@@ -11,12 +11,14 @@ func walkFiles(root string) <-chan string {
 
 	go func() {
 		filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			// just skip and continue when folders fail
 			if err != nil {
-				return err
+				return nil
 			}
 
 			abspath, _ := filepath.Abs(path)
-			if _, elem := filepath.Split(abspath); elem != "" {
+			abspathclean := filepath.Clean(abspath)
+			if _, elem := filepath.Split(abspathclean); elem != "" {
 				// Skip various temporary or "hidden" files or directories.
 				if elem[0] == '.' || elem[0] == '#' || elem[0] == '~' || elem[len(elem)-1] == '~' {
 					if info.IsDir() {
@@ -27,7 +29,7 @@ func walkFiles(root string) <-chan string {
 			}
 
 			if info != nil && info.Mode()&os.ModeType == 0 {
-				// out <- abspath
+				// out <- abspathclean
 				out <- path
 			}
 
