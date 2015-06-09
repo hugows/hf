@@ -14,6 +14,10 @@ func fill(x, y, w, h int, cell termbox.Cell) {
 	}
 }
 
+func tclear(x, y, w, h int) {
+	fill(x, y, w, h, termbox.Cell{Ch: ' '})
+}
+
 func voffset_coffset(text []byte, boffset int) (voffset, coffset int) {
 	text = text[:boffset]
 	for len(text) > 0 {

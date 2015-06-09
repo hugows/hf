@@ -20,6 +20,7 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	color := coldef
 	if selected {
 		color = coldef | termbox.AttrReverse
+		// color = termbox.ColorRed | termbox.AttrReverse
 	}
 
 	line := ""
@@ -29,20 +30,21 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	} else {
 		line += " "
 	}
-	tbprint(x, y, len(line), color, color, line)
+	tbprint(x, y, color, color, line)
 	x += len(line)
 
 	for idx, c := range res.contents {
 		fg := color
 		if res.highlighted[idx] {
-			fg = color | termbox.ColorGreen | termbox.AttrBold
+			fg = termbox.ColorGreen | termbox.ColorDefault | termbox.AttrBold
 		}
 		termbox.SetCell(x, y, c, fg, color)
 		x++
 	}
 
-	c := termbox.Cell{Ch: ' ', Fg: color, Bg: color}
-	fill(x, y, w, 1, c)
+	// c := termbox.Cell{Ch: ' ', Fg: color, Bg: color}
+	// fill(x, y, w, 1, c)
+	tclear(x, y, w, 1)
 }
 
 type ResultCollection []*Result
@@ -121,7 +123,7 @@ func (r *Results) Insert(s string) {
 func (r *Results) Queue(s string) {
 }
 
-func tbprint(x, y, w int, fg, bg termbox.Attribute, msg string) {
+func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 	for _, c := range msg {
 		termbox.SetCell(x, y, c, fg, bg)
 		x++
@@ -130,7 +132,7 @@ func tbprint(x, y, w int, fg, bg termbox.Attribute, msg string) {
 
 func (r *Results) Draw() {
 
-	fill(r.x, r.y, r.w, r.h, termbox.Cell{Ch: ' '})
+	tclear(r.x, r.y, r.w, r.h)
 
 	cy := r.y
 

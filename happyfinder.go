@@ -24,36 +24,36 @@ var cmd = flag.String("cmd", "vim", "command to run")
 
 // strings.Replace(tw.Text, " ", "+", -1)
 
-// const modeline_width = 30
+// // const modeline_width = 30
 
-func redraw_all(modeline Modeline, t time.Time) {
-	const coldef = termbox.ColorDefault
-	termbox.Clear(coldef, coldef)
-	w, h := termbox.Size()
-	// midy := h / 2
-	// midx := (w - modeline_width) / 2
+// func redraw_all(modeline Editbox, t time.Time) {
+// 	const coldef = termbox.ColorDefault
+// 	termbox.Clear(coldef, coldef)
+// 	w, h := termbox.Size()
+// 	// midy := h / 2
+// 	// midx := (w - modeline_width) / 2
 
-	// unicode box drawing chars around the edit box
-	// termbox.SetCell(midx-1, midy, '│', coldef, coldef)
-	// termbox.SetCell(midx+modeline_width, midy, '│', coldef, coldef)
-	// termbox.SetCell(midx-1, midy-1, '┌', coldef, coldef)
-	// termbox.SetCell(midx-1, midy+1, '└', coldef, coldef)
-	// termbox.SetCell(midx+modeline_width, midy-1, '┐', coldef, coldef)
-	// termbox.SetCell(midx+modeline_width, midy+1, '┘', coldef, coldef)
-	// fill(midx, midy-1, modeline_width, 1, termbox.Cell{Ch: '─'})
+// 	// unicode box drawing chars around the edit box
+// 	// termbox.SetCell(midx-1, midy, '│', coldef, coldef)
+// 	// termbox.SetCell(midx+modeline_width, midy, '│', coldef, coldef)
+// 	// termbox.SetCell(midx-1, midy-1, '┌', coldef, coldef)
+// 	// termbox.SetCell(midx-1, midy+1, '└', coldef, coldef)
+// 	// termbox.SetCell(midx+modeline_width, midy-1, '┐', coldef, coldef)
+// 	// termbox.SetCell(midx+modeline_width, midy+1, '┘', coldef, coldef)
+// 	// fill(midx, midy-1, modeline_width, 1, termbox.Cell{Ch: '─'})
 
-	// fill(0, h-2, modeline_width+2, 1, termbox.Cell{Ch: '─'})
+// 	// fill(0, h-2, modeline_width+2, 1, termbox.Cell{Ch: '─'})
 
-	termbox.SetCell(0, h-1, '>', coldef, coldef)
-	modeline.Draw(2, h-1, w-2, 1)
-	termbox.SetCursor(2+modeline.CursorX(), h-1)
+// 	termbox.SetCell(0, h-1, '>', coldef, coldef)
+// 	modeline.Draw(2, h-1, w-2, 1)
+// 	termbox.SetCursor(2+modeline.CursorX(), h-1)
 
-	// s := fmt.Sprint(time.Since(t))
+// 	// s := fmt.Sprint(time.Since(t))
 
-	// tbprint(10, h-2, w-2, termbox.ColorDefault|termbox.AttrReverse, termbox.ColorDefault, s)
+// 	// tbprint(10, h-2, w-2, termbox.ColorDefault|termbox.AttrReverse, termbox.ColorDefault, s)
 
-	//tbprint(0, h-1, coldef, coldef, "Press ESC to quit")
-}
+// 	//tbprint(0, h-1, coldef, coldef, "Press ESC to quit")
+// }
 
 func runCmdWithArgs(f string) {
 	// fmt.Println(*cmd, f)
@@ -72,8 +72,6 @@ const pauseAfterKeypress = (1500 * time.Millisecond)
 func main() {
 	flag.Parse()
 
-	var modeline Modeline
-	var statusline Statusline
 	var results Results
 
 	root := getRoot()
@@ -120,10 +118,13 @@ func main() {
 
 	var timeLastUser time.Time
 	resultsQueue := make([]string, 0, 100)
-
 	w, h := termbox.Size()
-	redraw_all(modeline, timeLastUser)
-	statusline.Draw(0, h-2, w, &results)
+	modeline := NewModeline(0, h-1, w)
+
+	// redraw_all(modeline, timeLastUser)
+	// statusline.Draw(0, h-2, w, &results)
+
+	modeline.Draw(&results)
 	results.SetSize(0, 0, w, h-2)
 	results.CopyAll()
 	results.Draw()
@@ -190,27 +191,27 @@ func main() {
 				case termbox.KeyArrowDown, termbox.KeyCtrlN:
 					results.SelectNext()
 				case termbox.KeyArrowLeft, termbox.KeyCtrlB:
-					modeline.MoveCursorOneRuneBackward()
+					modeline.input.MoveCursorOneRuneBackward()
 				case termbox.KeyArrowRight, termbox.KeyCtrlF:
-					modeline.MoveCursorOneRuneForward()
+					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
-					modeline.DeleteRuneBackward()
+					modeline.input.DeleteRuneBackward()
 					results.Filter(modeline.Contents())
 				case termbox.KeyDelete, termbox.KeyCtrlD:
-					modeline.DeleteRuneForward()
+					modeline.input.DeleteRuneForward()
 					results.Filter(modeline.Contents())
 				case termbox.KeySpace:
 					results.ToggleMark()
 				case termbox.KeyCtrlK:
-					modeline.DeleteTheRestOfTheLine()
+					modeline.input.DeleteTheRestOfTheLine()
 					results.Filter(modeline.Contents())
 				case termbox.KeyHome, termbox.KeyCtrlA:
-					modeline.MoveCursorToBeginningOfTheLine()
+					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
-					modeline.MoveCursorToEndOfTheLine()
+					modeline.input.MoveCursorToEndOfTheLine()
 				default:
 					if ev.Ch != 0 {
-						modeline.InsertRune(ev.Ch)
+						modeline.input.InsertRune(ev.Ch)
 						results.Filter(modeline.Contents())
 					}
 				}
@@ -219,8 +220,9 @@ func main() {
 			}
 		}
 
-		redraw_all(modeline, timeLastUser)
-		statusline.Draw(0, h-2, w, &results)
+		// redraw_all(modeline, timeLastUser)
+		// statusline.Draw(0, h-2, w, &results)
+		modeline.Draw(&results)
 
 		results.Draw()
 		termbox.Flush()
