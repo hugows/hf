@@ -124,9 +124,11 @@ func main() {
 		case filename, ok := <-fileChan:
 			if ok {
 				if time.Since(timeLastUser) > pauseAfterKeypress {
+					modeline.Unpause()
 					results.Insert(filename)
 					results.Filter(modeline.Contents())
 				} else {
+					modeline.Pause()
 					resultsQueue = append(resultsQueue, filename)
 				}
 			} else {
@@ -137,6 +139,8 @@ func main() {
 			timeLastUser = time.Now()
 			if fileChan != nil {
 				timer.Reset(pauseAfterKeypress)
+			} else {
+				modeline.Unpause()
 			}
 
 			switch ev.Type {

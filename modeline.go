@@ -10,31 +10,36 @@ type Modeline struct {
 	// dimensions
 	x, y, w int
 
+	// feedback for user
+	paused bool
+
 	// user input
 	input *Editbox
 }
 
 func NewModeline(x, y, w int) *Modeline {
 	e := new(Editbox)
-	return &Modeline{x, y, w, e}
+	return &Modeline{x, y, w, false, e}
 }
 
-func (results *Results) Summarize() string {
+func (results *Results) Summarize(paused bool) string {
 	sel := results.result_selected + 1
 	if results.result_count == 0 {
 		sel = 0
 	}
-	return fmt.Sprintf("(%d/%d)", sel, results.result_count)
-}
 
-func (m *Modeline) Clear() {
-
+	s := fmt.Sprintf("(%d/%d", sel, results.result_count)
+	if paused {
+		s += " paused"
+	}
+	s += ")"
+	return s
 }
 
 func (m *Modeline) Draw(results *Results) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
-	summary := results.Summarize()
+	summary := results.Summarize(m.paused)
 
 	tbprint(m.w-len(summary), m.y, termbox.ColorCyan|termbox.AttrBold, coldef, summary)
 
@@ -47,4 +52,11 @@ func (m *Modeline) Draw(results *Results) {
 
 func (m *Modeline) Contents() string {
 	return string(m.input.text)
+}
+
+func (m *Modeline) Pause() {
+	m.paused = true
+}
+func (m *Modeline) Unpause() {
+	m.paused = false
 }
