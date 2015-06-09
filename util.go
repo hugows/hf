@@ -18,6 +18,10 @@ func tclear(x, y, w, h int) {
 	fill(x, y, w, h, termbox.Cell{Ch: ' '})
 }
 
+func tclearcolor(x, y, w, h int, color termbox.Attribute) {
+	fill(x, y, w, h, termbox.Cell{Ch: ' ', Bg: color})
+}
+
 func voffset_coffset(text []byte, boffset int) (voffset, coffset int) {
 	text = text[:boffset]
 	for len(text) > 0 {

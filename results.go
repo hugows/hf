@@ -20,8 +20,9 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	const coldef = termbox.ColorDefault
 
 	color := coldef
+
 	if selected {
-		color = coldef | termbox.AttrReverse
+		color = color | termbox.AttrReverse
 	}
 
 	line := ""
@@ -31,19 +32,21 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	} else {
 		line += " "
 	}
+	tclearcolor(x, y, w, 1, color)
 	tbprint(x, y, color, color, line)
 	x += len(line)
 
 	for idx, c := range res.displayContents {
 		fg := color
+		bg := color
 		if res.highlighted[idx] {
-			fg = termbox.ColorGreen | termbox.ColorDefault | termbox.AttrBold
+			fg = termbox.ColorGreen | termbox.AttrBold
 		}
-		termbox.SetCell(x, y, c, fg, color)
+		termbox.SetCell(x, y, c, fg, bg)
 		x++
 	}
 
-	tclear(x, y, w, 1)
+	// tclear(x, y, w, 1)
 }
 
 type ResultCollection []*Result
@@ -91,7 +94,7 @@ func (r *Results) SelectFirst() {
 	}
 }
 
-func (r *Results) SelectPrevious() {
+func (r *Results) SelectPrevious() *Result {
 	if r.result_selected > 0 {
 		r.result_selected--
 	}
@@ -99,9 +102,11 @@ func (r *Results) SelectPrevious() {
 		r.top_result--
 		r.bottom_result--
 	}
+
+	return r.results[r.result_selected]
 }
 
-func (r *Results) SelectNext() {
+func (r *Results) SelectNext() *Result {
 	if r.result_selected < (r.result_count - 1) {
 		r.result_selected++
 
@@ -110,6 +115,8 @@ func (r *Results) SelectNext() {
 			r.bottom_result++
 		}
 	}
+
+	return r.results[r.result_selected]
 }
 
 func (r *Results) Insert(s string) {
@@ -216,4 +223,8 @@ func (r *Results) Filter(userinput string) {
 
 	// TODO: better cursor behaviouree
 	r.SelectFirst()
+}
+
+func (r *Results) GetSelected() *Result {
+	return r.results[r.result_selected]
 }

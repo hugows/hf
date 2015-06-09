@@ -88,8 +88,10 @@ func main() {
 	resultsQueue := make([]string, 0, 100)
 	w, h := termbox.Size()
 	modeline := NewModeline(0, h-1, w)
+	cmdline := new(CommandLine)
 
 	modeline.Draw(&results)
+	cmdline.Draw(0, h-2, w)
 	results.SetSize(0, 0, w, h-2)
 	results.CopyAll()
 	results.Draw()
@@ -156,9 +158,9 @@ func main() {
 				case termbox.KeyCtrlT:
 					results.ToggleMarkAll()
 				case termbox.KeyArrowUp, termbox.KeyCtrlP:
-					results.SelectPrevious()
+					cmdline.Update(results.SelectPrevious().displayContents)
 				case termbox.KeyArrowDown, termbox.KeyCtrlN:
-					results.SelectNext()
+					cmdline.Update(results.SelectNext().displayContents)
 				case termbox.KeyArrowLeft, termbox.KeyCtrlB:
 					modeline.input.MoveCursorOneRuneBackward()
 				case termbox.KeyArrowRight, termbox.KeyCtrlF:
@@ -190,6 +192,7 @@ func main() {
 		}
 
 		modeline.Draw(&results)
+		cmdline.Draw(0, h-2, w)
 		results.Draw()
 		termbox.Flush()
 	}
