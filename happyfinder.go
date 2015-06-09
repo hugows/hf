@@ -24,39 +24,7 @@ var cmd = flag.String("cmd", "vim", "command to run")
 
 // strings.Replace(tw.Text, " ", "+", -1)
 
-// // const modeline_width = 30
-
-// func redraw_all(modeline Editbox, t time.Time) {
-// 	const coldef = termbox.ColorDefault
-// 	termbox.Clear(coldef, coldef)
-// 	w, h := termbox.Size()
-// 	// midy := h / 2
-// 	// midx := (w - modeline_width) / 2
-
-// 	// unicode box drawing chars around the edit box
-// 	// termbox.SetCell(midx-1, midy, '│', coldef, coldef)
-// 	// termbox.SetCell(midx+modeline_width, midy, '│', coldef, coldef)
-// 	// termbox.SetCell(midx-1, midy-1, '┌', coldef, coldef)
-// 	// termbox.SetCell(midx-1, midy+1, '└', coldef, coldef)
-// 	// termbox.SetCell(midx+modeline_width, midy-1, '┐', coldef, coldef)
-// 	// termbox.SetCell(midx+modeline_width, midy+1, '┘', coldef, coldef)
-// 	// fill(midx, midy-1, modeline_width, 1, termbox.Cell{Ch: '─'})
-
-// 	// fill(0, h-2, modeline_width+2, 1, termbox.Cell{Ch: '─'})
-
-// 	termbox.SetCell(0, h-1, '>', coldef, coldef)
-// 	modeline.Draw(2, h-1, w-2, 1)
-// 	termbox.SetCursor(2+modeline.CursorX(), h-1)
-
-// 	// s := fmt.Sprint(time.Since(t))
-
-// 	// tbprint(10, h-2, w-2, termbox.ColorDefault|termbox.AttrReverse, termbox.ColorDefault, s)
-
-// 	//tbprint(0, h-1, coldef, coldef, "Press ESC to quit")
-// }
-
 func runCmdWithArgs(f string) {
-	// fmt.Println(*cmd, f)
 	cmd := exec.Command(*cmd, f)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -120,9 +88,6 @@ func main() {
 	resultsQueue := make([]string, 0, 100)
 	w, h := termbox.Size()
 	modeline := NewModeline(0, h-1, w)
-
-	// redraw_all(modeline, timeLastUser)
-	// statusline.Draw(0, h-2, w, &results)
 
 	modeline.Draw(&results)
 	results.SetSize(0, 0, w, h-2)
@@ -220,10 +185,7 @@ func main() {
 			}
 		}
 
-		// redraw_all(modeline, timeLastUser)
-		// statusline.Draw(0, h-2, w, &results)
 		modeline.Draw(&results)
-
 		results.Draw()
 		termbox.Flush()
 	}
