@@ -138,7 +138,10 @@ func main() {
 			}
 
 		case ev := <-termboxEventChan:
-			timeLastUser = time.Now()
+			if ev.Type == termbox.EventKey {
+				timeLastUser = time.Now()
+			}
+
 			if fileChan != nil {
 				timer.Reset(pauseAfterKeypress)
 			} else {
