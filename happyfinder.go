@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
 	"github.com/nsf/termbox-go"
 )
 
@@ -110,7 +111,7 @@ func main() {
 	// os.Args[0]
 
 	var r string
-	timeLastUser = time.Now().Add(- 1*time.Hour)
+	timeLastUser = time.Now().Add(-1 * time.Hour)
 
 	for {
 		select {

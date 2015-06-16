@@ -16,7 +16,10 @@ type Result struct {
 	score           int          // what is the score for this particular result?
 }
 
+const CHECKMARK_CHAR = " ✓"
+
 func (res Result) Draw(x, y, w int, selected bool) {
+	CHECKMARK_PAD := strings.Repeat(" ", len(CHECKMARK_CHAR))
 	const coldef = termbox.ColorDefault
 
 	color := coldef
@@ -28,9 +31,9 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	line := ""
 	line += fmt.Sprintf("%4d ", res.score)
 	if res.marked {
-		line += "*"
+		line += CHECKMARK_CHAR
 	} else {
-		line += " "
+		line += CHECKMARK_PAD
 	}
 	tclearcolor(x, y, w, 1, color)
 	tbprint(x, y, color, color, line)
