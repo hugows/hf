@@ -5,6 +5,34 @@ import (
 	"path/filepath"
 )
 
+func isVolumeRoot(path string) bool {
+	return os.IsPathSeparator(path[len(path)-1])
+}
+
+func isGitRoot(path string) bool {
+	gitpath := filepath.Join(path, ".git")
+
+	fi, err := os.Stat(gitpath)
+	if err != nil {
+		return false
+	}
+
+	return fi.IsDir()
+}
+
+func findGitRoot(path string) (bool, string) {
+	path = filepath.Clean(path)
+
+	for isVolumeRoot(path) == false {
+		if isGitRoot(path) {
+			return true, path
+		} else {
+			path = filepath.Dir(path)
+		}
+	}
+	return false, ""
+}
+
 // Recursively outputs each file in the root directory
 func walkFiles(root string) <-chan string {
 	out := make(chan string, 1000)
