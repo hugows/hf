@@ -21,8 +21,8 @@ func (rc ResultCollection) Less(i, j int) bool {
 
 type Results struct {
 	// Array of results to be filtered
-	allresults ResultCollection
-	results    ResultCollection
+	initialset ResultCollection
+	currentset ResultCollection
 
 	// Current user input
 	lastuserinput string
@@ -61,7 +61,7 @@ func (r *Results) SelectPrevious() *Result {
 		r.bottom_result--
 	}
 
-	return r.results[r.result_selected]
+	return r.currentset[r.result_selected]
 }
 
 func (r *Results) SelectNext() *Result {
@@ -74,14 +74,14 @@ func (r *Results) SelectNext() *Result {
 		}
 	}
 
-	return r.results[r.result_selected]
+	return r.currentset[r.result_selected]
 }
 
 func (r *Results) Insert(s string) {
 	result := new(Result)
 	result.contents = strings.ToLower(s)
 	result.displayContents = s
-	r.allresults = append(r.allresults, result)
+	r.initialset = append(r.initialset, result)
 	r.result_count++
 }
 
@@ -101,7 +101,7 @@ func (r *Results) Draw() {
 
 	cy := r.y
 
-	for cnt, res := range r.results[r.top_result:r.bottom_result] {
+	for cnt, res := range r.currentset[r.top_result:r.bottom_result] {
 		is_selected := (cnt + r.top_result) == r.result_selected
 		res.Draw(r.x, cy, r.w, is_selected)
 		cy++
@@ -110,13 +110,13 @@ func (r *Results) Draw() {
 
 func (r *Results) ToggleMark() {
 	if r.result_count > 0 {
-		r.results[r.result_selected].marked = !r.results[r.result_selected].marked
+		r.currentset[r.result_selected].marked = !r.currentset[r.result_selected].marked
 		r.SelectNext()
 	}
 }
 
 func (r *Results) ToggleMarkAll() {
-	for _, res := range r.results {
+	for _, res := range r.currentset {
 		res.marked = !res.marked
 	}
 }
@@ -133,15 +133,15 @@ func (r *Results) SetSize(x, y, w, h int) {
 }
 
 func (r *Results) CopyAll() {
-	r.results = r.allresults
+	r.currentset = r.initialset
 }
 
 func (r *Results) Filter(userinput string, keypressed chan bool) {
 	if len(userinput) == 0 {
-		r.results = r.allresults
-		r.result_count = len(r.allresults)
+		r.currentset = r.initialset
+		r.result_count = len(r.initialset)
 
-		for _, res := range r.results {
+		for _, res := range r.currentset {
 			res.highlighted = nil
 		}
 
@@ -149,13 +149,11 @@ func (r *Results) Filter(userinput string, keypressed chan bool) {
 		return
 	}
 
-	initialset := r.allresults
-
 	// Optimization
 	// Now invalid because results are changing...
 	// if len(r.lastuserinput) > 0 && strings.HasPrefix(userinput, r.lastuserinput) {
-	// 	initialset = r.results
-	// 	if len(r.results) == 0 {
+	// 	initialset = r.currentset
+	// 	if len(r.currentset) == 0 {
 	// 		r.result_count = 0
 	// 		r.SelectFirst()
 	// 		return
@@ -163,7 +161,7 @@ func (r *Results) Filter(userinput string, keypressed chan bool) {
 	// }
 	// r.lastuserinput = userinput
 
-	r.results = make([]*Result, 0, 100)
+	r.currentset = make([]*Result, 0, 100)
 	r.result_count = 0
 
 	// Filter
@@ -171,7 +169,7 @@ func (r *Results) Filter(userinput string, keypressed chan bool) {
 	quit := make(chan bool)
 
 	go func() {
-		for _, entry := range initialset {
+		for _, entry := range r.initialset {
 			best := score2(entry.contents, userinput)
 			entry.score, entry.highlighted = best.score, best.highlight
 			rchan <- entry
@@ -185,7 +183,7 @@ Loop:
 		select {
 		case res := <-rchan:
 			if res.score > 0 {
-				r.results = append(r.results, res)
+				r.currentset = append(r.currentset, res)
 				r.result_count++
 			}
 		case <-quit:
@@ -196,7 +194,7 @@ Loop:
 	}
 
 	// Sort
-	sort.Sort(r.results)
+	sort.Sort(r.currentset)
 
 	// TODO: better cursor behaviouree
 	r.SelectFirst()
@@ -204,5 +202,5 @@ Loop:
 }
 
 func (r *Results) GetSelected() *Result {
-	return r.results[r.result_selected]
+	return r.currentset[r.result_selected]
 }
