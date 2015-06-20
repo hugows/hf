@@ -181,7 +181,7 @@ func (r *Results) CopyAll() {
 	r.results = r.allresults
 }
 
-func (r *Results) Filter(userinput string) {
+func (r *Results) Filter(userinput string, keypressed chan bool) {
 	if len(userinput) == 0 {
 		r.results = r.allresults
 		r.result_count = len(r.allresults)
@@ -212,12 +212,31 @@ func (r *Results) Filter(userinput string) {
 	r.result_count = 0
 
 	// Filter
-	for _, res := range initialset {
-		best := score2(res.contents, userinput)
-		res.score, res.highlighted = best.score, best.highlight
-		if res.score > 0 {
-			r.results = append(r.results, res)
-			r.result_count++
+	rchan := make(chan *Result)
+	quit := make(chan bool)
+
+	go func() {
+		for _, entry := range initialset {
+			best := score2(entry.contents, userinput)
+			entry.score, entry.highlighted = best.score, best.highlight
+			rchan <- entry
+		}
+		quit <- true
+	}()
+
+	// Cancellable
+Loop:
+	for {
+		select {
+		case res := <-rchan:
+			if res.score > 0 {
+				r.results = append(r.results, res)
+				r.result_count++
+			}
+		case <-quit:
+			break Loop
+		case <-keypressed:
+			return
 		}
 	}
 

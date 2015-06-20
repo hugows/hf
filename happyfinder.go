@@ -11,6 +11,10 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+func hprint(a ...interface{}) (n int, err error) {
+	return fmt.Fprintln(os.Stderr, a...)
+}
+
 func getRoot() string {
 	if len(flag.Args()) == 0 {
 		return "."
@@ -112,6 +116,7 @@ func main() {
 
 	var r string
 	timeLastUser = time.Now().Add(-1 * time.Hour)
+	quit := make(chan bool)
 
 	for {
 		select {
@@ -121,7 +126,7 @@ func main() {
 				results.Insert(r)
 			}
 			resultsQueue = nil
-			results.Filter(modeline.Contents())
+			results.Filter(modeline.Contents(), quit)
 			timer = time.NewTimer(1 * time.Hour)
 
 		case filename, ok := <-fileChan:
@@ -129,7 +134,7 @@ func main() {
 				if time.Since(timeLastUser) > pauseAfterKeypress {
 					modeline.Unpause()
 					results.Insert(filename)
-					results.Filter(modeline.Contents())
+					results.Filter(modeline.Contents(), quit)
 				} else {
 					modeline.Pause()
 					resultsQueue = append(resultsQueue, filename)
@@ -171,15 +176,15 @@ func main() {
 					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
-					results.Filter(modeline.Contents())
+					results.Filter(modeline.Contents(), quit)
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
-					results.Filter(modeline.Contents())
+					results.Filter(modeline.Contents(), quit)
 				case termbox.KeySpace:
 					results.ToggleMark()
 				case termbox.KeyCtrlK:
 					modeline.input.DeleteTheRestOfTheLine()
-					results.Filter(modeline.Contents())
+					results.Filter(modeline.Contents(), quit)
 				case termbox.KeyHome, termbox.KeyCtrlA:
 					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
@@ -187,7 +192,7 @@ func main() {
 				default:
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
-						results.Filter(modeline.Contents())
+						results.Filter(modeline.Contents(), quit)
 					}
 				}
 			case termbox.EventError:
