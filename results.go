@@ -201,8 +201,6 @@ Loop:
 	// TODO: better cursor behaviouree
 	r.SelectFirst()
 
-	close(quit)
-	close(keypressed)
 }
 
 func (r *Results) GetSelected() *Result {
