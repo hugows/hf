@@ -48,7 +48,8 @@ func (rs *ResultSet) FlushQueue() {
 	rs.queue = nil
 }
 
-func (rs *ResultSet) Filter(userinput string, cancel chan bool) (filtered ResultSet) {
+// Sync, blocking
+func (rs *ResultSet) Filter(userinput string) (filtered ResultSet) {
 	if len(userinput) == 0 {
 		filtered.results = rs.results
 		filtered.count = len(rs.results)
@@ -65,31 +66,12 @@ func (rs *ResultSet) Filter(userinput string, cancel chan bool) (filtered Result
 	filtered.count = 0
 
 	// Filter
-	rchan := make(chan *Result)
-	quit := make(chan bool)
-
-	go func() {
-		for _, entry := range rs.results {
-			best := score2(entry.contents, userinput)
-			entry.score, entry.highlighted = best.score, best.highlight
-			rchan <- entry
-		}
-		quit <- true
-	}()
-
-	// Cancellable
-Loop:
-	for {
-		select {
-		case res := <-rchan:
-			if res.score > 0 {
-				filtered.results = append(filtered.results, res)
-				filtered.count++
-			}
-		case <-quit:
-			break Loop
-		case <-cancel:
-			return
+	for _, entry := range rs.results {
+		best := score2(entry.contents, userinput)
+		entry.score, entry.highlighted = best.score, best.highlight
+		if entry.score > 0 {
+			filtered.results = append(filtered.results, entry)
+			filtered.count++
 		}
 	}
 
@@ -99,4 +81,21 @@ Loop:
 	// TODO: better cursor behaviouree
 	// r.SelectFirst()
 	return
+}
+
+func (rs *ResultSet) AsyncFilter(userinput string, resultCh chan<- ResultSet, cancel <-chan bool) {
+	temp := make(chan ResultSet)
+
+	go func() {
+		temp <- rs.Filter(userinput)
+	}()
+
+	go func() {
+		select {
+		case <-cancel:
+			break
+		case r := <-temp:
+			resultCh <- r
+		}
+	}()
 }

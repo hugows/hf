@@ -102,6 +102,8 @@ func main() {
 	termbox.Flush()
 
 	termboxEventChan := make(chan termbox.Event)
+	resultCh := make(chan ResultSet)
+	quit := make(chan bool, 1)
 
 	go func() {
 		for {
@@ -116,24 +118,26 @@ func main() {
 
 	// var r string
 	timeLastUser = time.Now().Add(-1 * time.Hour)
-	quit := make(chan bool)
 
 	for {
 		select {
-		case <-timer.C:
-			resultset.FlushQueue()
-			filtered := resultset.Filter(modeline.Contents(), quit)
+		case filtered := <-resultCh:
 			rview.Update(filtered.results)
 			cmdline.Update(rview.GetSelected())
+		case <-timer.C:
+			resultset.FlushQueue()
+			resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+			// rview.Update(filtered.results)
+			// cmdline.Update(rview.GetSelected())
 			timer = time.NewTimer(1 * time.Hour)
 		case filename, ok := <-fileChan:
 			if ok {
 				if time.Since(timeLastUser) > pauseAfterKeypress {
 					modeline.Unpause()
 					resultset.Insert(filename)
-					filtered := resultset.Filter(modeline.Contents(), quit)
-					rview.Update(filtered.results)
-					cmdline.Update(rview.GetSelected())
+					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					// rview.Update(filtered.results)
+					// cmdline.Update(rview.GetSelected())
 				} else {
 					modeline.Pause()
 					resultset.Queue(filename)
@@ -175,21 +179,19 @@ func main() {
 					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
-					filtered := resultset.Filter(modeline.Contents(), quit)
-					rview.Update(filtered.results)
-					cmdline.Update(rview.GetSelected())
+					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					// rview.Update(filtered.results)
+					// cmdline.Update(rview.GetSelected())
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
-					filtered := resultset.Filter(modeline.Contents(), quit)
-					rview.Update(filtered.results)
-					cmdline.Update(rview.GetSelected())
+					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					// rview.Update(filtered.results)
+					// cmdline.Update(rview.GetSelected())
 				case termbox.KeySpace:
 					rview.ToggleMark()
 				case termbox.KeyCtrlK:
 					modeline.input.DeleteTheRestOfTheLine()
-					filtered := resultset.Filter(modeline.Contents(), quit)
-					rview.Update(filtered.results)
-					cmdline.Update(rview.GetSelected())
+					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
 				case termbox.KeyHome, termbox.KeyCtrlA:
 					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
@@ -197,9 +199,7 @@ func main() {
 				default:
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
-						filtered := resultset.Filter(modeline.Contents(), quit)
-						rview.Update(filtered.results)
-						cmdline.Update(rview.GetSelected())
+						resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
 					}
 				}
 			case termbox.EventError:
