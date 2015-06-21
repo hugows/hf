@@ -156,7 +156,6 @@ func (rs *ResultSet) FilterManager(inputCh <-chan string, resultCh chan<- Result
 		case filtered := <-c:
 			tmpResults <- filtered
 		case <-cancel:
-			filtercancel <- true
 			// select {
 			// case filtercancel <- true:
 			// default:

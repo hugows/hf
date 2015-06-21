@@ -92,6 +92,8 @@ func main() {
 	modeline := NewModeline(0, h-1, w)
 	cmdline := new(CommandLine)
 
+	termkey := NewTermboxEventWrapper()
+
 	modeline.Draw(&rview)
 	cmdline.Draw(0, h-2, w)
 	rview.SetSize(0, 0, w, h-2)
@@ -109,13 +111,14 @@ func main() {
 
 	go func() {
 		for {
-			termboxEventChan <- termbox.PollEvent()
+			termboxEventChan <- termkey.Poll() //termbox.PollEvent()
 		}
 	}()
 
 	go func() {
 		for {
 			filtered := <-resultCh
+			fmt.Println(termkey.Peek())
 			rview.Update(filtered.results)
 			cmdline.Update(rview.GetSelected())
 
@@ -204,6 +207,7 @@ func main() {
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
 						inputCh <- modeline.Contents()
+						fmt.Println(termkey.Peek())
 					}
 				}
 			case termbox.EventError:
