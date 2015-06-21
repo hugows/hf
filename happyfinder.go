@@ -44,7 +44,7 @@ const pauseAfterKeypress = (1500 * time.Millisecond)
 func main() {
 	flag.Parse()
 
-	var results Results
+	var rview ResultsView
 
 	root := getRoot()
 	fi, err := os.Stat(root)
@@ -65,6 +65,8 @@ func main() {
 	termbox.SetInputMode(termbox.InputEsc)
 
 	fileChan := walkFiles(getRoot())
+
+	resultset := new(ResultSet)
 
 	// for filename := range fileChan {
 	// results.Insert(<-fileChan)
@@ -89,16 +91,17 @@ func main() {
 	// }
 
 	var timeLastUser time.Time
-	resultsQueue := make([]string, 0, 100)
+	// resultsQueue := make([]string, 0, 100)
 	w, h := termbox.Size()
 	modeline := NewModeline(0, h-1, w)
 	cmdline := new(CommandLine)
 
-	modeline.Draw(&results)
+	modeline.Draw(&rview)
 	cmdline.Draw(0, h-2, w)
-	results.SetSize(0, 0, w, h-2)
-	results.CopyAll()
-	results.Draw()
+	rview.SetSize(0, 0, w, h-2)
+	// rview.CopyAll()
+	// rview.Update()
+	// rview.Draw()
 	termbox.Flush()
 
 	termboxEventChan := make(chan termbox.Event)
@@ -114,30 +117,27 @@ func main() {
 	// Command name is:
 	// os.Args[0]
 
-	var r string
+	// var r string
 	timeLastUser = time.Now().Add(-1 * time.Hour)
 	quit := make(chan bool)
 
 	for {
 		select {
 		case <-timer.C:
-			for len(resultsQueue) > 0 {
-				r, resultsQueue = resultsQueue[len(resultsQueue)-1], resultsQueue[:len(resultsQueue)-1]
-				results.Insert(r)
-			}
-			resultsQueue = nil
-			results.Filter(modeline.Contents(), quit)
+			resultset.FlushQueue()
+			filtered := resultset.Filter(modeline.Contents(), quit)
+			rview.Update(filtered.results)
 			timer = time.NewTimer(1 * time.Hour)
-
 		case filename, ok := <-fileChan:
 			if ok {
 				if time.Since(timeLastUser) > pauseAfterKeypress {
 					modeline.Unpause()
-					results.Insert(filename)
-					results.Filter(modeline.Contents(), quit)
+					resultset.Insert(filename)
+					filtered := resultset.Filter(modeline.Contents(), quit)
+					rview.Update(filtered.results)
 				} else {
 					modeline.Pause()
-					resultsQueue = append(resultsQueue, filename)
+					resultset.Queue(filename)
 				}
 			} else {
 				fileChan = nil
@@ -162,29 +162,32 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					// runCmdWithArgs(results.FormatSelected())
+					// runCmdWithArgs(rview.FormatSelected())
 					return
 				case termbox.KeyCtrlT:
-					results.ToggleMarkAll()
+					rview.ToggleMarkAll()
 				case termbox.KeyArrowUp, termbox.KeyCtrlP:
-					cmdline.Update(results.SelectPrevious().displayContents)
+					cmdline.Update(rview.SelectPrevious().displayContents)
 				case termbox.KeyArrowDown, termbox.KeyCtrlN:
-					cmdline.Update(results.SelectNext().displayContents)
+					cmdline.Update(rview.SelectNext().displayContents)
 				case termbox.KeyArrowLeft, termbox.KeyCtrlB:
 					modeline.input.MoveCursorOneRuneBackward()
 				case termbox.KeyArrowRight, termbox.KeyCtrlF:
 					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
-					results.Filter(modeline.Contents(), quit)
+					filtered := resultset.Filter(modeline.Contents(), quit)
+					rview.Update(filtered.results)
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
-					results.Filter(modeline.Contents(), quit)
+					filtered := resultset.Filter(modeline.Contents(), quit)
+					rview.Update(filtered.results)
 				case termbox.KeySpace:
-					results.ToggleMark()
+					rview.ToggleMark()
 				case termbox.KeyCtrlK:
 					modeline.input.DeleteTheRestOfTheLine()
-					results.Filter(modeline.Contents(), quit)
+					filtered := resultset.Filter(modeline.Contents(), quit)
+					rview.Update(filtered.results)
 				case termbox.KeyHome, termbox.KeyCtrlA:
 					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
@@ -192,7 +195,9 @@ func main() {
 				default:
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
-						results.Filter(modeline.Contents(), quit)
+						filtered := resultset.Filter(modeline.Contents(), quit)
+						rview.Update(filtered.results)
+						hprint(filtered.results)
 					}
 				}
 			case termbox.EventError:
@@ -200,9 +205,9 @@ func main() {
 			}
 		}
 
-		modeline.Draw(&results)
+		modeline.Draw(&rview)
 		cmdline.Draw(0, h-2, w)
-		results.Draw()
+		rview.Draw()
 		termbox.Flush()
 	}
 

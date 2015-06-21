@@ -22,7 +22,7 @@ func NewModeline(x, y, w int) *Modeline {
 	return &Modeline{x, y, w, false, e}
 }
 
-func (results *Results) Summarize(paused bool) string {
+func (results *ResultsView) Summarize(paused bool) string {
 	sel := results.result_selected + 1
 	if results.result_count == 0 {
 		sel = 0
@@ -36,7 +36,7 @@ func (results *Results) Summarize(paused bool) string {
 	return s
 }
 
-func (m *Modeline) Draw(results *Results) {
+func (m *Modeline) Draw(results *ResultsView) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
 	summary := results.Summarize(m.paused)
