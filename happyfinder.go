@@ -102,12 +102,27 @@ func main() {
 	termbox.Flush()
 
 	termboxEventChan := make(chan termbox.Event)
-	resultCh := make(chan ResultSet)
-	quit := make(chan bool, 1)
+	inputCh := make(chan string)
+	resultCh := make(chan ResultSet, 1000)
+
+	go resultset.FilterManager(inputCh, resultCh)
 
 	go func() {
 		for {
 			termboxEventChan <- termbox.PollEvent()
+		}
+	}()
+
+	go func() {
+		for {
+			filtered := <-resultCh
+			rview.Update(filtered.results)
+			cmdline.Update(rview.GetSelected())
+
+			modeline.Draw(&rview)
+			cmdline.Draw(0, h-2, w)
+			rview.Draw()
+			termbox.Flush()
 		}
 	}()
 
@@ -121,19 +136,16 @@ func main() {
 
 	for {
 		select {
-		case filtered := <-resultCh:
-			rview.Update(filtered.results)
-			cmdline.Update(rview.GetSelected())
 		case <-timer.C:
 			resultset.FlushQueue()
-			resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+			inputCh <- modeline.Contents()
 			timer = time.NewTimer(1 * time.Hour)
 		case filename, ok := <-fileChan:
 			if ok {
 				if time.Since(timeLastUser) > pauseAfterKeypress {
 					modeline.Unpause()
 					resultset.Insert(filename)
-					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					inputCh <- modeline.Contents()
 				} else {
 					modeline.Pause()
 					resultset.Queue(filename)
@@ -175,15 +187,15 @@ func main() {
 					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
-					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					inputCh <- modeline.Contents()
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
-					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					inputCh <- modeline.Contents()
 				case termbox.KeySpace:
 					rview.ToggleMark()
 				case termbox.KeyCtrlK:
 					modeline.input.DeleteTheRestOfTheLine()
-					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+					inputCh <- modeline.Contents()
 				case termbox.KeyHome, termbox.KeyCtrlA:
 					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
@@ -191,7 +203,7 @@ func main() {
 				default:
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
-						resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
+						inputCh <- modeline.Contents()
 					}
 				}
 			case termbox.EventError:

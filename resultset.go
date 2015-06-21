@@ -83,19 +83,117 @@ func (rs *ResultSet) Filter(userinput string) (filtered ResultSet) {
 	return
 }
 
-func (rs *ResultSet) AsyncFilter(userinput string, resultCh chan<- ResultSet, cancel <-chan bool) {
-	temp := make(chan ResultSet)
+func (rs *ResultSet) FilterCancel(userinput string, cancel chan bool) (filtered ResultSet) {
+	if len(userinput) == 0 {
+		filtered.results = rs.results
+		filtered.count = len(rs.results)
 
-	go func() {
-		temp <- rs.Filter(userinput)
-	}()
-
-	go func() {
-		select {
-		case <-cancel:
-			break
-		case r := <-temp:
-			resultCh <- r
+		for _, res := range filtered.results {
+			res.highlighted = nil
 		}
+
+		// r.SelectFirst() // TODO
+		return
+	}
+
+	filtered.results = make(ResultArray, 0, 100)
+	filtered.count = 0
+
+	// Filter
+	rchan := make(chan *Result)
+	quit := make(chan bool)
+
+	go func() {
+		for _, entry := range rs.results {
+			best := score2(entry.contents, userinput)
+			entry.score, entry.highlighted = best.score, best.highlight
+			rchan <- entry
+		}
+		quit <- true
 	}()
+
+	// Cancellable
+Loop:
+	for {
+		select {
+		case res := <-rchan:
+			if res.score > 0 {
+				filtered.results = append(filtered.results, res)
+				filtered.count++
+			}
+		case <-quit:
+			break Loop
+		case <-cancel:
+			return
+		}
+	}
+
+	// Sort
+	sort.Sort(filtered.results)
+
+	// TODO: better cursor behaviouree
+	// r.SelectFirst()
+	return
 }
+
+func (rs *ResultSet) SimpleFilterManager(inputCh <-chan string, resultCh chan<- ResultSet) {
+	for {
+		userinput := <-inputCh
+		resultCh <- rs.Filter(userinput)
+	}
+}
+
+func (rs *ResultSet) FilterManager(inputCh <-chan string, resultCh chan<- ResultSet) {
+	cancel := make(chan bool)
+	tmpResults := make(chan ResultSet, 1000)
+
+	filter := func(u string, cancel chan bool) {
+		c := make(chan ResultSet)
+		filtercancel := make(chan bool)
+		go func() { c <- rs.FilterCancel(u, filtercancel) }()
+
+		select {
+		case filtered := <-c:
+			tmpResults <- filtered
+		case <-cancel:
+			filtercancel <- true
+			// select {
+			// case filtercancel <- true:
+			// default:
+			// }
+			break
+		}
+
+	}
+
+	for {
+		select {
+		case input := <-inputCh:
+			select {
+			case cancel <- true:
+			default:
+			}
+
+			go filter(input, cancel)
+		case res := <-tmpResults:
+			resultCh <- res
+		}
+	}
+}
+
+// func (rs *ResultSet) AsyncFilter(userinput string, resultCh chan<- ResultSet, cancel <-chan bool) {
+// 	temp := make(chan ResultSet)
+
+// 	go func() {
+// 		temp <- rs.Filter(userinput)
+// 	}()
+
+// 	go func() {
+// 		select {
+// 		case <-cancel:
+// 			break
+// 		case r := <-temp:
+// 			resultCh <- r
+// 		}
+// 	}()
+// }
