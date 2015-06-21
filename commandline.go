@@ -6,8 +6,12 @@ type CommandLine struct {
 	text string
 }
 
-func (cmd *CommandLine) Update(s string) {
-	cmd.text = s
+func (cmd *CommandLine) Update(r *Result) {
+	if r != nil {
+		cmd.text = r.displayContents
+	} else {
+		cmd.text = ""
+	}
 }
 
 func (cmd *CommandLine) Draw(x, y, w int) {

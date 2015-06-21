@@ -44,7 +44,10 @@ func (r *ResultsView) SelectPrevious() *Result {
 		r.bottom_result--
 	}
 
-	return r.results[r.result_selected]
+	if len(r.results) > 0 && r.result_selected < len(r.results) {
+		return r.results[r.result_selected]
+	}
+	return nil
 }
 
 func (r *ResultsView) SelectNext() *Result {
@@ -57,7 +60,10 @@ func (r *ResultsView) SelectNext() *Result {
 		}
 	}
 
-	return r.results[r.result_selected]
+	if len(r.results) > 0 && r.result_selected < len(r.results) {
+		return r.results[r.result_selected]
+	}
+	return nil
 }
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -111,5 +117,8 @@ func (r *ResultsView) Update(results ResultArray) {
 }
 
 func (r *ResultsView) GetSelected() *Result {
-	return r.results[r.result_selected]
+	if len(r.results) > 0 && r.result_selected < len(r.results) {
+		return r.results[r.result_selected]
+	}
+	return nil
 }
