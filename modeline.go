@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nsf/termbox-go"
 )
@@ -51,7 +52,7 @@ func (m *Modeline) Draw(results *ResultsView) {
 }
 
 func (m *Modeline) Contents() string {
-	return string(m.input.text).ToLower()
+	return strings.ToLower(string(m.input.text))
 }
 
 func (m *Modeline) Pause() {
