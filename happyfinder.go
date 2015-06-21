@@ -127,8 +127,6 @@ func main() {
 		case <-timer.C:
 			resultset.FlushQueue()
 			resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
-			// rview.Update(filtered.results)
-			// cmdline.Update(rview.GetSelected())
 			timer = time.NewTimer(1 * time.Hour)
 		case filename, ok := <-fileChan:
 			if ok {
@@ -136,8 +134,6 @@ func main() {
 					modeline.Unpause()
 					resultset.Insert(filename)
 					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
-					// rview.Update(filtered.results)
-					// cmdline.Update(rview.GetSelected())
 				} else {
 					modeline.Pause()
 					resultset.Queue(filename)
@@ -180,13 +176,9 @@ func main() {
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
 					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
-					// rview.Update(filtered.results)
-					// cmdline.Update(rview.GetSelected())
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
 					resultset.AsyncFilter(modeline.Contents(), resultCh, quit)
-					// rview.Update(filtered.results)
-					// cmdline.Update(rview.GetSelected())
 				case termbox.KeySpace:
 					rview.ToggleMark()
 				case termbox.KeyCtrlK:
