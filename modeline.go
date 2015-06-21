@@ -51,7 +51,7 @@ func (m *Modeline) Draw(results *ResultsView) {
 }
 
 func (m *Modeline) Contents() string {
-	return string(m.input.text)
+	return string(m.input.text).ToLower()
 }
 
 func (m *Modeline) Pause() {
