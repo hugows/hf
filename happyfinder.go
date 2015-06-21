@@ -197,7 +197,6 @@ func main() {
 						modeline.input.InsertRune(ev.Ch)
 						filtered := resultset.Filter(modeline.Contents(), quit)
 						rview.Update(filtered.results)
-						hprint(filtered.results)
 					}
 				}
 			case termbox.EventError:
