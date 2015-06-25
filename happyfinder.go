@@ -6,9 +6,16 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/nsf/termbox-go"
+	"github.com/rcrowley/go-metrics"
+)
+
+var (
+	global_lastkeypress int64
+	metricsFilter       metrics.Timer
 )
 
 func getRoot() string {
@@ -21,6 +28,8 @@ func getRoot() string {
 
 // hf --cmd=emacs ~/go/src/github.com/hugows/ happy
 var cmd = flag.String("cmd", "vim", "command to run")
+
+// var termkey *TermboxEventWrapper
 
 // strings.Replace(tw.Text, " ", "+", -1)
 
@@ -35,7 +44,7 @@ func runCmdWithArgs(f string) {
 	}
 }
 
-const pauseAfterKeypress = (1000 * time.Millisecond)
+const pauseAfterKeypress = (500 * time.Millisecond)
 
 func main() {
 	flag.Parse()
@@ -61,6 +70,18 @@ func main() {
 	termbox.SetInputMode(termbox.InputEsc)
 
 	fileChan := walkFiles(getRoot())
+	// fileChan := make(chan string, 1000)
+
+	// go func() {
+	// 	count := 0
+	// 	// prefix := "brasilbrasilbrasilbrasilbrasil"
+	// 	prefix := "brasilalemonalemonalemonalemonalemon"
+
+	// 	for i := 0; i < 10000; i++ {
+	// 		fileChan <- fmt.Sprintf("%s%d", prefix, count)
+	// 		count += 1
+	// 	}
+	// }()
 
 	resultset := new(ResultSet)
 
@@ -92,7 +113,7 @@ func main() {
 	modeline := NewModeline(0, h-1, w)
 	cmdline := new(CommandLine)
 
-	termkey := NewTermboxEventWrapper()
+	// termkey = NewTermboxEventWrapper()
 
 	modeline.Draw(&rview)
 	cmdline.Draw(0, h-2, w)
@@ -104,24 +125,71 @@ func main() {
 	termbox.Flush()
 
 	termboxEventChan := make(chan termbox.Event)
-	inputCh := make(chan string)
-	resultCh := make(chan ResultSet, 1000)
+	newFileCh := make(chan bool, 10000)
+	newInputCh := make(chan bool)
+	// resultCh := make(chan ResultSet, 1000)
 
-	go resultset.FilterManager(inputCh, resultCh)
+	// go resultset.FilterManager(inputCh, resultCh)
 
+	// throttle := time.NewTicker(time.Millisecond * 500)
 	go func() {
 		for {
-			termboxEventChan <- termkey.Poll() //termbox.PollEvent()
+			termboxEventChan <- termbox.PollEvent()
+		}
+	}()
+
+	// dirty := false
+
+	// go func() {
+	// 	for {
+	// 		filtered := <-resultCh
+	// 		// dirty = false
+	// 		rview.Update(filtered.results)
+	// 		cmdline.Update(rview.GetSelected())
+
+	// 		modeline.Draw(&rview)
+	// 		cmdline.Draw(0, h-2, w)
+	// 		rview.Draw()
+	// 		termbox.Flush()
+	// 	}
+	// }()
+	var mutex = &sync.Mutex{}
+
+	go func() {
+		REAL_SOON_NOW := time.Millisecond * 15
+		sched := time.NewTimer(REAL_SOON_NOW)
+		count := 0
+
+		for {
+			select {
+			case <-newFileCh:
+				count += 1
+				if count < 100 {
+					sched.Reset(REAL_SOON_NOW)
+				}
+			case <-sched.C:
+				mutex.Lock()
+				filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
+				rview.Update(filtered.results)
+				cmdline.Update(rview.GetSelected())
+				mutex.Unlock()
+				count = 0
+				modeline.Draw(&rview)
+				cmdline.Draw(0, h-2, w)
+				rview.Draw()
+				termbox.Flush()
+			}
 		}
 	}()
 
 	go func() {
 		for {
-			filtered := <-resultCh
-			fmt.Println(termkey.Peek())
+			<-newInputCh
+			mutex.Lock()
+			filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
 			rview.Update(filtered.results)
 			cmdline.Update(rview.GetSelected())
-
+			mutex.Unlock()
 			modeline.Draw(&rview)
 			cmdline.Draw(0, h-2, w)
 			rview.Draw()
@@ -129,28 +197,62 @@ func main() {
 		}
 	}()
 
+	// func (rs *ResultSet) AsyncFilter(dirty <-chan bool, resultCh chan<- ResultSet) {
+	// 	for {
+	// 		<-dirty
+	// 		result
+	// 		res, _ := rs.Filter(when, userinput)
+	// 		resultCh <- res
+	// 	}
+	// }
+
 	timer := time.NewTimer(1 * time.Hour)
+
+	metricsFilter = metrics.NewTimer()
+	metrics.Register("Filter", metricsFilter)
+
+	// go metrics.Log(metrics.DefaultRegistry, 60e8, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
 
 	// Command name is:
 	// os.Args[0]
 
 	// var r string
 	timeLastUser = time.Now().Add(-1 * time.Hour)
+	// dirty := false
+	// ticker := time.NewTicker(time.Millisecond * 1000)
 
 	for {
 		select {
 		case <-timer.C:
 			resultset.FlushQueue()
-			filtered := resultset.Filter(modeline.Contents())
-			rview.Update(filtered.results)
+			// filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
+			// rview.Update(filtered.results)
 			timer = time.NewTimer(1 * time.Hour)
+		// case <-ticker.C:
+		// redraw
+		// if dirty {
+		// 	// go resultset.AsyncFilter(global_lastkeypress, modeline.Contents(), resultCh)
+		// 	filtered, cancelled := resultset.Filter(global_lastkeypress, modeline.Contents())
+		// 	if !cancelled {
+		// 		rview.Update(filtered.results)
+		// 		cmdline.Update(rview.GetSelected())
+		// 		dirty = false
+		// 	}
+		// }
 		case filename, ok := <-fileChan:
 			if ok {
+				// if not paused anymore
 				if time.Since(timeLastUser) > pauseAfterKeypress {
 					modeline.Unpause()
 					resultset.Insert(filename)
-					filtered := resultset.Filter(modeline.Contents())
-					rview.Update(filtered.results)
+					newFileCh <- true
+
+					// dirty = true
+					// resultset.AsyncFilter(global_lastkeypress, modeline.Contents(), resultCh)
+
+					// filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
+					// rview.Update(filtered.results)
+					// cmdline.Update(rview.GetSelected())
 				} else {
 					modeline.Pause()
 					resultset.Queue(filename)
@@ -162,6 +264,7 @@ func main() {
 		case ev := <-termboxEventChan:
 			if ev.Type == termbox.EventKey {
 				timeLastUser = time.Now()
+				global_lastkeypress = 0 //timeLastUser.UnixNano()
 			}
 
 			if fileChan != nil {
@@ -192,18 +295,15 @@ func main() {
 					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
-					filtered := resultset.Filter(modeline.Contents())
-					rview.Update(filtered.results)
+					newInputCh <- true
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
-					filtered := resultset.Filter(modeline.Contents())
-					rview.Update(filtered.results)
+					newInputCh <- true
 				case termbox.KeySpace:
 					rview.ToggleMark()
 				case termbox.KeyCtrlK:
 					modeline.input.DeleteTheRestOfTheLine()
-					filtered := resultset.Filter(modeline.Contents())
-					rview.Update(filtered.results)
+					newInputCh <- true
 				case termbox.KeyHome, termbox.KeyCtrlA:
 					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
@@ -211,13 +311,14 @@ func main() {
 				default:
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
-						filtered := resultset.Filter(modeline.Contents())
-						rview.Update(filtered.results)
+						newInputCh <- true
 					}
 				}
 			case termbox.EventError:
 				panic(ev.Err)
 			}
+
+			// fmt.Println(modeline.Contents())
 		}
 
 		modeline.Draw(&rview)

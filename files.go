@@ -59,6 +59,7 @@ func walkFiles(root string) <-chan string {
 			if info != nil && info.Mode()&os.ModeType == 0 {
 				// out <- abspathclean
 				out <- path
+				//time.Sleep(2 * time.Second)
 			}
 
 			return nil

@@ -160,6 +160,10 @@ func (m *Matcher) Clone() *Matcher {
 	}
 }
 
+func (m *Matcher) Hash() uint32 {
+	return uint32(m.linepos)<<16 | uint32(m.inputpos)
+}
+
 func charsToMap(chars []int) map[int]bool {
 	highlight := make(map[int]bool, 0)
 	for _, idx := range chars {
@@ -168,17 +172,19 @@ func charsToMap(chars []int) map[int]bool {
 	return highlight
 }
 
-func score2(line string, input string) (best *BestScore) {
-	matchers := make([]*Matcher, 0, 1)
+func score2(when int64, line string, input string) (best *BestScore) {
 	best = new(BestScore)
-
-	x := new(Matcher)
-	matchers = append(matchers, x)
 
 	if len(input) > len(line) || len(input) == 0 || len(line) == 0 {
 		best.score = -1
 		return
 	}
+
+	matchers := make([]*Matcher, 0, 1)
+	matchersmap := make(map[uint32]bool)
+
+	x := new(Matcher)
+	matchers = append(matchers, x)
 
 Outer:
 	for {
@@ -188,17 +194,17 @@ Outer:
 				continue
 			}
 
-			// Brasil Bra
 			if line[m.linepos] == input[m.inputpos] {
-				// VERY SLOW
-				// if strings.EqualFold(string(line[m.linepos]), string(input[m.inputpos])) {
-
 				// New matcher to find alternatives
 				if (m.linepos + 1) < len(line) { // If matcher isn't starting beyond the current line...
 					new_matcher := m.Clone() // Alternate matcher is like the current
 					new_matcher.linepos++    // but skip current char
 
-					matchers = append(matchers, new_matcher)
+					// Dont add repeated matchers
+					if _, seen := matchersmap[new_matcher.Hash()]; !seen {
+						matchers = append(matchers, new_matcher)
+						matchersmap[new_matcher.Hash()] = true
+					}
 				}
 
 				m.chars = append(m.chars, m.linepos)
@@ -229,6 +235,11 @@ Outer:
 				if m.inputpos == len(input) {
 					m.ended = true
 					m.complete_match = true
+
+					if global_lastkeypress > when {
+						// return with first complete since our deadline is past!
+						return
+					}
 				}
 
 				if m.linepos == len(line) {
@@ -252,6 +263,11 @@ Outer:
 		if all_ended {
 			break Outer
 		}
+	}
+
+	if global_lastkeypress > when {
+		best.score = -1
+		return
 	}
 
 	first := true

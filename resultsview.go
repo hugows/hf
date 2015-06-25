@@ -74,9 +74,7 @@ func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
 }
 
 func (r *ResultsView) Draw() {
-
 	tclear(r.x, r.y, r.w, r.h)
-
 	cy := r.y
 
 	for cnt, res := range r.results[r.top_result:r.bottom_result] {
@@ -84,6 +82,7 @@ func (r *ResultsView) Draw() {
 		res.Draw(r.x, cy, r.w, is_selected)
 		cy++
 	}
+
 }
 
 func (r *ResultsView) ToggleMark() {
@@ -114,6 +113,7 @@ func (r *ResultsView) Update(results ResultArray) {
 	r.results = results
 	r.result_count = len(results)
 	r.SetSize(r.x, r.y, r.w, r.h)
+
 }
 
 func (r *ResultsView) GetSelected() *Result {

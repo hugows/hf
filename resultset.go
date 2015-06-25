@@ -34,7 +34,7 @@ func (rs *ResultSet) Insert(entry string) {
 
 func (rs *ResultSet) Queue(entry string) {
 	if rs.queue == nil {
-		rs.queue = make([]string, 100)
+		rs.queue = make([]string, 0, 100)
 	}
 	rs.queue = append(rs.queue, entry)
 }
@@ -49,7 +49,9 @@ func (rs *ResultSet) FlushQueue() {
 }
 
 // Sync, blocking
-func (rs *ResultSet) Filter(userinput string) (filtered ResultSet) {
+
+func (rs *ResultSet) Filter(when int64, userinput string) (filtered ResultSet) {
+
 	if len(userinput) == 0 {
 		filtered.results = rs.results
 		filtered.count = len(rs.results)
@@ -58,7 +60,6 @@ func (rs *ResultSet) Filter(userinput string) (filtered ResultSet) {
 			res.highlighted = nil
 		}
 
-		// r.SelectFirst() // TODO
 		return
 	}
 
@@ -67,7 +68,10 @@ func (rs *ResultSet) Filter(userinput string) (filtered ResultSet) {
 
 	// Filter
 	for _, entry := range rs.results {
-		best := score2(entry.contents, userinput)
+		if global_lastkeypress > when {
+			break // partial
+		}
+		best := score2(when, entry.contents, userinput)
 		entry.score, entry.highlighted = best.score, best.highlight
 		if entry.score > 0 {
 			filtered.results = append(filtered.results, entry)
@@ -82,6 +86,57 @@ func (rs *ResultSet) Filter(userinput string) (filtered ResultSet) {
 	// r.SelectFirst()
 	return
 }
+
+// func (rs *ResultSet) Filter(when int64, userinput string) (filtered ResultSet, cancelled bool) {
+// 	var a ResultSet
+// 	var b bool
+// 	metricsFilter.Time(func() {
+// 		a, b = rs.FilterInternal(when, userinput)
+// 	})
+// 	// t.Update(47)
+// 	return a, b
+// }
+
+// func (rs *ResultSet) AsyncFilter(userinput string, resultCh chan ResultArray) {
+// 	filtered := new(ResultSet)
+
+// 	if len(userinput) == 0 {
+// 		filtered.results = rs.results
+// 		filtered.count = len(rs.results)
+
+// 		for _, res := range filtered.results {
+// 			res.highlighted = nil
+// 		}
+
+// 		// r.SelectFirst() // TODO
+// 		return
+// 	}
+
+// 	filtered.results = make(ResultArray, 0, 100)
+// 	filtered.count = 0
+
+// 	// Filter
+// 	for _, entry := range rs.results {
+// 		if termkey.Peek() {
+// 			return
+// 		}
+// 		best := score2(entry.contents, userinput)
+// 		entry.score, entry.highlighted = best.score, best.highlight
+// 		if entry.score > 0 {
+// 			filtered.results = append(filtered.results, entry)
+// 			filtered.count++
+// 		}
+// 	}
+
+// 	// Sort
+// 	sort.Sort(filtered.results)
+
+// 	resultCh <- filtered.results
+
+// 	// TODO: better cursor behaviouree
+// 	// r.SelectFirst()
+// 	return
+// }
 
 func (rs *ResultSet) FilterCancel(userinput string, cancel chan bool) (filtered ResultSet) {
 	if len(userinput) == 0 {
@@ -105,7 +160,7 @@ func (rs *ResultSet) FilterCancel(userinput string, cancel chan bool) (filtered 
 
 	go func() {
 		for _, entry := range rs.results {
-			best := score2(entry.contents, userinput)
+			best := score2(0, entry.contents, userinput)
 			entry.score, entry.highlighted = best.score, best.highlight
 			rchan <- entry
 		}
@@ -136,49 +191,42 @@ Loop:
 	return
 }
 
-func (rs *ResultSet) SimpleFilterManager(inputCh <-chan string, resultCh chan<- ResultSet) {
-	for {
-		userinput := <-inputCh
-		resultCh <- rs.Filter(userinput)
-	}
-}
+// func (rs *ResultSet) FilterManager(inputCh <-chan string, resultCh chan<- ResultSet) {
+// 	cancel := make(chan bool)
+// 	tmpResults := make(chan ResultSet, 1000)
 
-func (rs *ResultSet) FilterManager(inputCh <-chan string, resultCh chan<- ResultSet) {
-	cancel := make(chan bool)
-	tmpResults := make(chan ResultSet, 1000)
+// 	filter := func(u string, cancel chan bool) {
+// 		c := make(chan ResultSet)
+// 		filtercancel := make(chan bool)
+// 		go func() { c <- rs.FilterCancel(u, filtercancel) }()
 
-	filter := func(u string, cancel chan bool) {
-		c := make(chan ResultSet)
-		filtercancel := make(chan bool)
-		go func() { c <- rs.FilterCancel(u, filtercancel) }()
+// 		select {
+// 		case filtered := <-c:
+// 			tmpResults <- filtered
+// 		case <-cancel:
+// 			// select {
+// 			// case filtercancel <- true:
+// 			// default:
+// 			// }
+// 			break
+// 		}
 
-		select {
-		case filtered := <-c:
-			tmpResults <- filtered
-		case <-cancel:
-			// select {
-			// case filtercancel <- true:
-			// default:
-			// }
-			break
-		}
+// 	}
 
-	}
+// 	for {
+// 		select {
+// 		case input := <-inputCh:
+// 			select {
+// 			case cancel <- true:
+// 			default:
+// 			}
 
-	for {
-		select {
-		case input := <-inputCh:
-			select {
-			case cancel <- true:
-			default:
-			}
-
-			go filter(input, cancel)
-		case res := <-tmpResults:
-			resultCh <- res
-		}
-	}
-}
+// 			go filter(input, cancel)
+// 		case res := <-tmpResults:
+// 			resultCh <- res
+// 		}
+// 	}
+// }
 
 // func (rs *ResultSet) AsyncFilter(userinput string, resultCh chan<- ResultSet, cancel <-chan bool) {
 // 	temp := make(chan ResultSet)

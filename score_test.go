@@ -61,7 +61,8 @@ func TestScore(t *testing.T) {
 
 	last := 0
 	for _, c := range cases {
-		s, _ := score2(c, "zip")
+		best := score2(c, "zip")
+		s := best.score
 		if s < 0 || s > 100 || (s < last) {
 			t.Errorf("Score(%q,%q) == %d (previous %d)", c, "zip", s, last)
 		}
