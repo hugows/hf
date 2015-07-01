@@ -9,12 +9,10 @@ import (
 	"time"
 
 	"github.com/nsf/termbox-go"
-	"github.com/rcrowley/go-metrics"
 )
 
 var (
 	global_lastkeypress int64
-	metricsFilter       metrics.Timer
 )
 
 func getRoot() string {
@@ -174,18 +172,12 @@ func main() {
 				cmdline.Update(rview.GetSelected())
 				count = 0
 				forceDrawCh <- true
+			case <-newInputCh:
+				filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
+				rview.Update(filtered.results)
+				cmdline.Update(rview.GetSelected())
+				forceDrawCh <- true
 			}
-		}
-	}()
-
-	go func() {
-		for {
-			<-newInputCh
-			// mutex.Lock()
-			filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
-			rview.Update(filtered.results)
-			cmdline.Update(rview.GetSelected())
-			forceDrawCh <- true
 		}
 	}()
 
@@ -198,10 +190,10 @@ func main() {
 	// 	}
 	// }
 
-	timer := time.NewTimer(1 * time.Hour)
+	idleTimer := time.NewTimer(1 * time.Hour)
 
-	metricsFilter = metrics.NewTimer()
-	metrics.Register("Filter", metricsFilter)
+	// metricsFilter = metrics.NewTimer()
+	// metrics.Register("Filter", metricsFilter)
 
 	// go metrics.Log(metrics.DefaultRegistry, 60e8, log.New(os.Stderr, "metrics: ", log.Lmicroseconds))
 
@@ -210,6 +202,7 @@ func main() {
 
 	// var r string
 	timeLastUser = time.Now().Add(-1 * time.Hour)
+	timeLastFilter := time.Now()
 	// dirty := false
 	// ticker := time.NewTicker(time.Millisecond * 1000)
 
@@ -217,11 +210,11 @@ func main() {
 		select {
 		case <-forceDrawCh:
 			/* redraw */
-		case <-timer.C:
+		case <-idleTimer.C:
 			resultset.FlushQueue()
 			// filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
 			// rview.Update(filtered.results)
-			timer = time.NewTimer(1 * time.Hour)
+			idleTimer = time.NewTimer(1 * time.Hour)
 		// case <-ticker.C:
 		// redraw
 		// if dirty {
@@ -235,11 +228,15 @@ func main() {
 		// }
 		case filename, ok := <-fileChan:
 			if ok {
-				// if not paused anymore
-				if time.Since(timeLastUser) > pauseAfterKeypress {
+				// limit resorts
+				if (time.Since(timeLastUser) > pauseAfterKeypress) &&
+					(time.Since(timeLastFilter) > (50 * time.Millisecond)) {
+
 					modeline.Unpause()
-					resultset.Insert(filename)
+					resultset.Queue(filename)
+					// resultset.Insert(filename)
 					newFileCh <- true
+					timeLastFilter = time.Now()
 
 					// dirty = true
 					// resultset.AsyncFilter(global_lastkeypress, modeline.Contents(), resultCh)
@@ -248,11 +245,16 @@ func main() {
 					// rview.Update(filtered.results)
 					// cmdline.Update(rview.GetSelected())
 				} else {
-					modeline.Pause()
+					if time.Since(timeLastUser) > pauseAfterKeypress {
+						modeline.Pause()
+					}
 					resultset.Queue(filename)
 				}
 			} else {
+				// Last file received...
+				resultset.FlushQueue()
 				fileChan = nil
+				newFileCh <- true
 			}
 
 		case ev := <-termboxEventChan:
@@ -262,7 +264,7 @@ func main() {
 			}
 
 			if fileChan != nil {
-				timer.Reset(pauseAfterKeypress)
+				idleTimer.Reset(pauseAfterKeypress)
 			} else {
 				modeline.Unpause()
 			}
