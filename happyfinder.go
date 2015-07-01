@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"sync"
 	"time"
 
 	"github.com/nsf/termbox-go"
@@ -126,6 +125,7 @@ func main() {
 
 	termboxEventChan := make(chan termbox.Event)
 	newFileCh := make(chan bool, 10000)
+	forceDrawCh := make(chan bool, 100)
 	newInputCh := make(chan bool)
 	// resultCh := make(chan ResultSet, 1000)
 
@@ -153,7 +153,7 @@ func main() {
 	// 		termbox.Flush()
 	// 	}
 	// }()
-	var mutex = &sync.Mutex{}
+	// var mutex = &sync.Mutex{}
 
 	go func() {
 		REAL_SOON_NOW := time.Millisecond * 15
@@ -168,16 +168,12 @@ func main() {
 					sched.Reset(REAL_SOON_NOW)
 				}
 			case <-sched.C:
-				mutex.Lock()
+				// mutex.Lock()
 				filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
 				rview.Update(filtered.results)
 				cmdline.Update(rview.GetSelected())
-				mutex.Unlock()
 				count = 0
-				modeline.Draw(&rview)
-				cmdline.Draw(0, h-2, w)
-				rview.Draw()
-				termbox.Flush()
+				forceDrawCh <- true
 			}
 		}
 	}()
@@ -185,15 +181,11 @@ func main() {
 	go func() {
 		for {
 			<-newInputCh
-			mutex.Lock()
+			// mutex.Lock()
 			filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
 			rview.Update(filtered.results)
 			cmdline.Update(rview.GetSelected())
-			mutex.Unlock()
-			modeline.Draw(&rview)
-			cmdline.Draw(0, h-2, w)
-			rview.Draw()
-			termbox.Flush()
+			forceDrawCh <- true
 		}
 	}()
 
@@ -223,6 +215,8 @@ func main() {
 
 	for {
 		select {
+		case <-forceDrawCh:
+			/* redraw */
 		case <-timer.C:
 			resultset.FlushQueue()
 			// filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
