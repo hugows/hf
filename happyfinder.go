@@ -64,7 +64,7 @@ func main() {
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 
-	fileChan := walkFiles(getRoot())
+	fileCh := walkFiles(getRoot())
 	termboxEventChan := make(chan termbox.Event)
 
 	forceDrawCh := make(chan bool, 100)
@@ -111,10 +111,10 @@ func main() {
 			idleTimer = time.NewTimer(1 * time.Hour)
 			if !modeline.paused {
 				modeline.LastFile()
-				fileChan = nil
+				fileCh = nil
 			}
 
-		case filename, ok := <-fileChan:
+		case filename, ok := <-fileCh:
 			if time.Since(timeLastUser) > pauseAfterKeypress {
 				modeline.Unpause()
 			} else {
@@ -131,15 +131,15 @@ func main() {
 
 				if !ok {
 					modeline.LastFile()
-					fileChan = nil
+					fileCh = nil
 				}
 			} else if !ok {
 				idleTimer.Reset(redrawPause)
-				fileChan = nil
+				fileCh = nil
 			}
 
 		case ev := <-termboxEventChan:
-			if fileChan != nil {
+			if fileCh != nil {
 				idleTimer.Reset(pauseAfterKeypress)
 			} else {
 				modeline.Unpause()
