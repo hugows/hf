@@ -52,7 +52,7 @@ func (rs *ResultSet) Filter(when int64, userinput string) (filtered ResultSet) {
 		if global_lastkeypress > when {
 			break // partial
 		}
-		best := score2(when, entry.contents, userinput)
+		best := score(when, entry.contents, userinput)
 		entry.score, entry.highlighted = best.score, best.highlight
 		if entry.score > 0 {
 			filtered.results = append(filtered.results, entry)

@@ -1,111 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"strings"
-	"unicode"
-)
-
-// "brazil", "bra" 					-> [[0] [1] [2]]
-// "hodor", "od"   					-> [[1 3] [2]]
-// "/usr/sbin/unsetpassword", "usr" -> [[1 10] [2 5 12 17 18] [3 21]]
-func occur(s, chars string) (all [][]int, any bool) {
-	all = make([][]int, 0, len(s))
-	any = true
-
-	if len(chars) > 0 {
-		for _, m := range chars {
-			charoccur := make([]int, 0)
-			for i, c := range s {
-				if c == m || unicode.ToLower(c) == unicode.ToLower(m) {
-					charoccur = append(charoccur, i)
-				}
-			}
-			if len(charoccur) == 0 {
-				// Some letter had 0 matches... abort
-				any = false
-				return
-			}
-			all = append(all, charoccur)
-		}
-	}
-
-	return
-}
-
-// [[a b] [c d]] -> [[a c] [a d] [b c] [b d]]
-func combinations(path []int, sets [][]int, acc *[][]int) {
-	if len(sets) == 0 {
-		*acc = append(*acc, path)
-	} else {
-		for _, el := range sets[0] {
-			path := append(path, el)
-			np := make([]int, len(path))
-			copy(np, path)
-			combinations(np, sets[1:], acc)
-		}
-	}
-}
-
-func singlescore(comb []int, beat int) int {
-	score := 0
-	lastchpos := comb[0]
-	for _, chpos := range comb[1:] {
-		dist := chpos - lastchpos
-
-		// Early return optimization
-		if dist <= 0 {
-			return 1000
-		}
-		score += dist + 1
-
-		// Early return optimization
-		if beat > 0 && score > beat {
-			return 1000
-		}
-		lastchpos = chpos
-	}
-	return score
-}
-
-func score(against string, userinput string) (bestscore int, mhighlight map[int]bool) {
-	mhighlight = make(map[int]bool, 0)
-
-	if len(userinput) > len(against) || len(userinput) == 0 || len(against) == 0 {
-		bestscore = -1
-		return
-	}
-
-	all := make([][]int, 0i)
-	oc, any := occur(against, userinput)
-
-	// No matches found
-	if !any {
-		bestscore = -1
-		return
-	}
-
-	combinations([]int{}, oc, &all)
-
-	bestscore = singlescore(all[0], 0)
-	highlight := all[0]
-
-	for _, comb := range all[1:] {
-		s := singlescore(comb, bestscore)
-		if s < bestscore && s > 0 {
-			bestscore = s
-			highlight = comb
-		}
-	}
-
-	for _, idx := range highlight {
-		mhighlight[idx] = true
-	}
-
-	return bestscore, mhighlight
-
-}
-
 type Matcher struct {
 	linepos, inputpos     int
 	total_distance        int
@@ -125,19 +19,6 @@ type BestScore struct {
 	distance  int
 	longest   int
 	highlight map[int]bool
-}
-
-func displayChars(line []byte, chars []int) {
-	for _, pos := range chars {
-		line[pos] = strings.ToUpper(string(line[pos]))[0]
-	}
-}
-
-func (m *Matcher) ToString(line, input string) string {
-	nl := []byte(line)
-	displayChars(nl[:], m.chars)
-	return fmt.Sprintf("linepos=%2d dist=%2d inputpos=%2d lmp=%2d llg=%2d full=%v ended=%v groups=%d chars=%v (%v)",
-		m.linepos, m.total_distance, m.inputpos, m.lastmatchpos, m.lenlongestgroup, m.complete_match, m.ended, m.groups, string(nl), m.chars)
 }
 
 // Return new pointer to  Matcher with relevant variables copied from the
@@ -172,7 +53,7 @@ func charsToMap(chars []int) map[int]bool {
 	return highlight
 }
 
-func score2(when int64, line string, input string) (best *BestScore) {
+func score(when int64, line string, input string) (best *BestScore) {
 	best = new(BestScore)
 
 	if len(input) > len(line) || len(input) == 0 || len(line) == 0 {
