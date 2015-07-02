@@ -13,3 +13,9 @@ git support (--git), should we be heuristic?
 
 summarize the command line when multiple selected
 
+# BUGS
+
+(win) does not unpause if not more files, must unpause on idletimer as well
+
+(win) chamadas sucessivas retornam numero total de arquivos diferentes, 3000 pra 10000???
+      deve estar fazendo insercao duplicada no sort...
