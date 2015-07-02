@@ -11,7 +11,7 @@ import (
 
 const (
 	pauseAfterKeypress = (1500 * time.Millisecond)
-	redrawPause        = 15 * time.Millisecond
+	redrawPause        = 30 * time.Millisecond
 )
 
 var (
@@ -28,10 +28,6 @@ func getRoot() string {
 
 // hf --cmd=emacs ~/go/src/github.com/hugows/ happy
 var cmd = flag.String("cmd", "vim", "command to run")
-
-// var termkey *TermboxEventWrapper
-
-// strings.Replace(tw.Text, " ", "+", -1)
 
 func main() {
 	flag.Parse()
@@ -112,6 +108,7 @@ func main() {
 			if !modeline.paused {
 				modeline.LastFile()
 				fileCh = nil
+				forceSortCh <- true
 			}
 
 		case filename, ok := <-fileCh:
@@ -125,7 +122,7 @@ func main() {
 				resultset.Insert(filename)
 			}
 
-			if !modeline.paused && time.Since(timeLastFilter) > (15*time.Millisecond) {
+			if !modeline.paused && time.Since(timeLastFilter) > redrawPause {
 				forceSortCh <- true
 				timeLastFilter = time.Now()
 
