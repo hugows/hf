@@ -65,7 +65,7 @@ func main() {
 	idleTimer := time.NewTimer(1 * time.Hour)
 
 	fileCh := walkFiles(getRoot())
-	termboxEventChan := make(chan termbox.Event)
+	termboxEventCh := make(chan termbox.Event)
 
 	forceDrawCh := make(chan bool, 100)
 	forceSortCh := make(chan bool, 100)
@@ -80,7 +80,7 @@ func main() {
 				timeLastUser = time.Now()
 				global_lastkeypress = timeLastUser.UnixNano()
 			}
-			termboxEventChan <- ev
+			termboxEventCh <- ev
 		}
 	}()
 
@@ -138,7 +138,7 @@ func main() {
 				fileCh = nil
 			}
 
-		case ev := <-termboxEventChan:
+		case ev := <-termboxEventCh:
 			if fileCh != nil {
 				idleTimer.Reset(pauseAfterKeypress)
 			} else {
