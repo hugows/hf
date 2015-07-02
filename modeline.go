@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/nsf/termbox-go"
@@ -12,7 +12,8 @@ type Modeline struct {
 	x, y, w int
 
 	// feedback for user
-	paused bool
+	paused       bool
+	walkFinished bool
 
 	// user input
 	input *Editbox
@@ -20,17 +21,20 @@ type Modeline struct {
 
 func NewModeline(x, y, w int) *Modeline {
 	e := new(Editbox)
-	return &Modeline{x, y, w, false, e}
+	return &Modeline{x, y, w, false, false, e}
 }
 
-func (results *ResultsView) Summarize(paused bool) string {
+func (m *Modeline) Summarize(results *ResultsView) string {
 	sel := results.result_selected + 1
 	if results.result_count == 0 {
 		sel = 0
 	}
 
-	s := fmt.Sprintf("(%d/%d", sel, results.result_count)
-	if paused {
+	s := "(" + strconv.Itoa(sel) + "/" + strconv.Itoa(results.result_count)
+	if !m.walkFinished {
+		s += "+"
+	}
+	if m.paused {
 		s += " paused"
 	}
 	s += ")"
@@ -40,7 +44,7 @@ func (results *ResultsView) Summarize(paused bool) string {
 func (m *Modeline) Draw(results *ResultsView) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
-	summary := results.Summarize(m.paused)
+	summary := m.Summarize(results) //.Summarize(m.paused)
 
 	tbprint(m.w-len(summary), m.y, termbox.ColorCyan|termbox.AttrBold, coldef, summary)
 
@@ -60,4 +64,7 @@ func (m *Modeline) Pause() {
 }
 func (m *Modeline) Unpause() {
 	m.paused = false
+}
+func (m *Modeline) LastFile() {
+	m.walkFinished = true
 }
