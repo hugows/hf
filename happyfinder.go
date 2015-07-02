@@ -122,9 +122,10 @@ func main() {
 	termbox.Flush()
 
 	termboxEventChan := make(chan termbox.Event)
-	newFileCh := make(chan bool, 10000)
+	// forceSortCh := make(chan bool, 10000)
 	forceDrawCh := make(chan bool, 100)
-	newInputCh := make(chan bool)
+	forceSortCh := make(chan bool, 100)
+	// forceSortCh := make(chan bool)
 	// resultCh := make(chan ResultSet, 1000)
 
 	// go resultset.FilterManager(inputCh, resultCh)
@@ -154,30 +155,13 @@ func main() {
 	// var mutex = &sync.Mutex{}
 
 	go func() {
-		REAL_SOON_NOW := time.Millisecond * 15
-		sched := time.NewTimer(REAL_SOON_NOW)
-		count := 0
-
 		for {
-			select {
-			case <-newFileCh:
-				count += 1
-				if count < 100 {
-					sched.Reset(REAL_SOON_NOW)
-				}
-			case <-sched.C:
-				// mutex.Lock()
-				filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
-				rview.Update(filtered.results)
-				cmdline.Update(rview.GetSelected())
-				count = 0
-				forceDrawCh <- true
-			case <-newInputCh:
-				filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
-				rview.Update(filtered.results)
-				cmdline.Update(rview.GetSelected())
-				forceDrawCh <- true
-			}
+			<-forceSortCh
+			resultset.FlushQueue()
+			filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
+			rview.Update(filtered.results)
+			cmdline.Update(rview.GetSelected())
+			forceDrawCh <- true
 		}
 	}()
 
@@ -211,7 +195,7 @@ func main() {
 		case <-forceDrawCh:
 			/* redraw */
 		case <-idleTimer.C:
-			resultset.FlushQueue()
+			// resultset.FlushQueue()
 			// filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
 			// rview.Update(filtered.results)
 			idleTimer = time.NewTimer(1 * time.Hour)
@@ -229,14 +213,13 @@ func main() {
 		case filename, ok := <-fileChan:
 			if ok {
 				// limit resorts
-				if (time.Since(timeLastUser) > pauseAfterKeypress) &&
-					(time.Since(timeLastFilter) > (50 * time.Millisecond)) {
+
+				// fmt.Println(filename, time.Since(timeLastUser))
+
+				if time.Since(timeLastUser) > pauseAfterKeypress {
 
 					modeline.Unpause()
-					resultset.Queue(filename)
 					// resultset.Insert(filename)
-					newFileCh <- true
-					timeLastFilter = time.Now()
 
 					// dirty = true
 					// resultset.AsyncFilter(global_lastkeypress, modeline.Contents(), resultCh)
@@ -245,16 +228,21 @@ func main() {
 					// rview.Update(filtered.results)
 					// cmdline.Update(rview.GetSelected())
 				} else {
-					if time.Since(timeLastUser) > pauseAfterKeypress {
-						modeline.Pause()
-					}
-					resultset.Queue(filename)
+					modeline.Pause()
+					// resultset.Queue(filename)
 				}
+
+				resultset.Queue(filename)
+				if !modeline.paused && time.Since(timeLastFilter) > (15*time.Millisecond) {
+					forceSortCh <- true
+					timeLastFilter = time.Now()
+				}
+
 			} else {
 				// Last file received...
 				resultset.FlushQueue()
 				fileChan = nil
-				newFileCh <- true
+				forceSortCh <- true
 			}
 
 		case ev := <-termboxEventChan:
@@ -291,15 +279,15 @@ func main() {
 					modeline.input.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
 					modeline.input.DeleteRuneBackward()
-					newInputCh <- true
+					forceSortCh <- true
 				case termbox.KeyDelete, termbox.KeyCtrlD:
 					modeline.input.DeleteRuneForward()
-					newInputCh <- true
+					forceSortCh <- true
 				case termbox.KeySpace:
 					rview.ToggleMark()
 				case termbox.KeyCtrlK:
 					modeline.input.DeleteTheRestOfTheLine()
-					newInputCh <- true
+					forceSortCh <- true
 				case termbox.KeyHome, termbox.KeyCtrlA:
 					modeline.input.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
@@ -307,7 +295,7 @@ func main() {
 				default:
 					if ev.Ch != 0 {
 						modeline.input.InsertRune(ev.Ch)
-						newInputCh <- true
+						forceSortCh <- true
 					}
 				}
 			case termbox.EventError:
