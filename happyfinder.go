@@ -3,9 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/nsf/termbox-go"
@@ -34,17 +32,6 @@ var cmd = flag.String("cmd", "vim", "command to run")
 // var termkey *TermboxEventWrapper
 
 // strings.Replace(tw.Text, " ", "+", -1)
-
-func runCmdWithArgs(f string) {
-	cmd := exec.Command(*cmd, f)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
 
 func main() {
 	flag.Parse()
