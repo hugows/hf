@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,6 +71,21 @@ func walkFiles(root string) <-chan string {
 
 			return nil
 		})
+
+		close(out)
+
+	}()
+
+	return out
+}
+
+func walkFilesFake(count int) <-chan string {
+	out := make(chan string, 1000)
+
+	go func() {
+		for i := 0; i < count; i++ {
+			out <- fmt.Sprintf("brasil%d", i)
+		}
 
 		close(out)
 

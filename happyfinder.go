@@ -60,7 +60,8 @@ func main() {
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 
-	fileCh := walkFiles(getRoot())
+	// fileCh := walkFiles(getRoot())
+	fileCh := walkFilesFake(1500)
 	termboxEventCh := make(chan termbox.Event)
 
 	forceDrawCh := make(chan bool, 100)
@@ -109,6 +110,8 @@ func main() {
 				modeline.LastFile()
 				fileCh = nil
 				forceSortCh <- true
+			} else if !modeline.walkFinished {
+				idleTimer.Reset(redrawPause)
 			}
 
 		case filename, ok := <-fileCh:
