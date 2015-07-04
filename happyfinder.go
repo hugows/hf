@@ -102,6 +102,7 @@ func main() {
 	for {
 		select {
 		case <-forceDrawCh:
+			rview.SelectFirst()
 			/* redraw */
 
 		case <-idleTimer.C:

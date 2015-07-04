@@ -27,6 +27,7 @@ func (rs *ResultSet) Insert(entry string) {
 	result := new(Result)
 	result.contents = strings.ToLower(entry)
 	result.displayContents = entry
+	result.id = rs.count
 	rs.results = append(rs.results, result)
 	rs.count++
 }

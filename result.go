@@ -8,6 +8,7 @@ import (
 )
 
 type Result struct {
+	id              int          // unique id to identify a specific result between "sorts"
 	contents        string       // user input is matched against lowercase version
 	displayContents string       // original filename (or line) to display
 	highlighted     map[int]bool // hashmap of the characters to be highlighted
