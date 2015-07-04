@@ -70,7 +70,7 @@ func walkFiles(root string) <-chan string {
 			}
 
 			return nil
-		})
+		}) // walk fn
 
 		close(out)
 

@@ -60,15 +60,15 @@ func main() {
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 
-	// fileCh := walkFiles(getRoot())
-	fileCh := walkFilesFake(1500)
+	fileCh := walkFiles(getRoot())
+	// fileCh := walkFilesFake(2500)
 	termboxEventCh := make(chan termbox.Event)
 
 	forceDrawCh := make(chan bool, 100)
 	forceSortCh := make(chan bool, 100)
 
 	timeLastUser := time.Now().Add(-1 * time.Hour)
-	timeLastFilter := time.Now()
+	timeLastSort := time.Now()
 
 	go func() {
 		for {
@@ -106,43 +106,33 @@ func main() {
 
 		case <-idleTimer.C:
 			idleTimer = time.NewTimer(1 * time.Hour)
-			if !modeline.paused {
-				modeline.LastFile()
-				fileCh = nil
+			if !modeline.paused && fileCh == nil {
 				forceSortCh <- true
-			} else if !modeline.walkFinished {
+			} else {
 				idleTimer.Reset(redrawPause)
 			}
 
 		case filename, ok := <-fileCh:
-			if time.Since(timeLastUser) > pauseAfterKeypress {
-				modeline.Unpause()
-			} else {
-				modeline.Pause()
-			}
+			modeline.FlagPause(time.Since(timeLastUser) < pauseAfterKeypress)
 
 			if ok {
 				fileset.Insert(filename)
-			}
-
-			if !modeline.paused && time.Since(timeLastFilter) > redrawPause {
-				forceSortCh <- true
-				timeLastFilter = time.Now()
-
-				if !ok {
-					modeline.LastFile()
-					fileCh = nil
-				}
-			} else if !ok {
-				idleTimer.Reset(redrawPause)
+			} else {
+				modeline.FlagLastFile()
 				fileCh = nil
 			}
 
+			if !modeline.paused && time.Since(timeLastSort) > redrawPause {
+				forceSortCh <- true
+				timeLastSort = time.Now()
+			} else if !ok {
+				idleTimer.Reset(redrawPause)
+			}
+
 		case ev := <-termboxEventCh:
-			if fileCh != nil {
-				idleTimer.Reset(pauseAfterKeypress)
-			} else {
-				modeline.Unpause()
+			idleTimer.Reset(pauseAfterKeypress)
+			if fileCh == nil {
+				modeline.FlagPause(false)
 			}
 
 			switch ev.Type {
@@ -189,8 +179,6 @@ func main() {
 			case termbox.EventError:
 				panic(ev.Err)
 			}
-
-			// fmt.Println(modeline.Contents())
 		}
 
 		modeline.Draw(&rview)

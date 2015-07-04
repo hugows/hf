@@ -13,7 +13,3 @@ git support (--git), should we be heuristic?
 
 summarize the command line when multiple selected
 
-# BUGS
-
-(win) chamadas sucessivas retornam numero total de arquivos diferentes, 3000 pra 10000???
-      deve estar fazendo insercao duplicada no sort...

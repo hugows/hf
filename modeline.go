@@ -59,12 +59,9 @@ func (m *Modeline) Contents() string {
 	return strings.ToLower(string(m.input.text))
 }
 
-func (m *Modeline) Pause() {
-	m.paused = true
+func (m *Modeline) FlagPause(b bool) {
+	m.paused = b
 }
-func (m *Modeline) Unpause() {
-	m.paused = false
-}
-func (m *Modeline) LastFile() {
+func (m *Modeline) FlagLastFile() {
 	m.walkFinished = true
 }
