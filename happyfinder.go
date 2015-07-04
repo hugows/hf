@@ -52,7 +52,7 @@ func main() {
 	}
 	termbox.SetInputMode(termbox.InputEsc)
 
-	resultset := new(ResultSet)
+	fileset := new(ResultSet)
 
 	w, h := termbox.Size()
 	modeline := NewModeline(0, h-1, w)
@@ -83,7 +83,7 @@ func main() {
 	go func() {
 		for {
 			<-forceSortCh
-			filtered := resultset.Filter(global_lastkeypress, modeline.Contents())
+			filtered := fileset.Filter(global_lastkeypress, modeline.Contents())
 			rview.Update(filtered.results)
 			cmdline.Update(rview.GetSelected())
 			forceDrawCh <- true
@@ -119,7 +119,7 @@ func main() {
 			}
 
 			if ok {
-				resultset.Insert(filename)
+				fileset.Insert(filename)
 			}
 
 			if !modeline.paused && time.Since(timeLastFilter) > redrawPause {
