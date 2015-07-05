@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/nsf/termbox-go"
@@ -29,7 +28,9 @@ func (res Result) Draw(x, y, w int, selected bool) {
 	}
 
 	line := ""
-	line += fmt.Sprintf("%4d ", res.score)
+	// User doesn't need to the score.... just for debugging.
+	//line += fmt.Sprintf("%4d ", res.score)
+
 	if res.marked {
 		line += CHECKMARK_CHAR
 	} else {

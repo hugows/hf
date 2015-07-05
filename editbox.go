@@ -12,13 +12,16 @@ type Editbox struct {
 	cursor_boffset int // cursor offset in bytes
 	cursor_voffset int // visual cursor offset in termbox cells
 	cursor_coffset int // cursor offset in unicode code points
+
+	// colors
+	fg termbox.Attribute
+	bg termbox.Attribute
 }
 
 // Draws the Editbox in the given location
 func (e *Editbox) Draw(x, y, w int) {
 	e.AdjustVOffset(w)
 
-	const coldef = termbox.ColorDefault
 	tclear(x, y, w, 1)
 
 	t := e.text
@@ -31,20 +34,20 @@ func (e *Editbox) Draw(x, y, w int) {
 		}
 
 		if rx >= w {
-			termbox.SetCell(x+w-1, y, '→', coldef, coldef)
+			termbox.SetCell(x+w-1, y, '→', e.fg, e.bg)
 			break
 		}
 
 		r, size := utf8.DecodeRune(t)
 		if rx >= 0 {
-			termbox.SetCell(x+rx, y, r, coldef, coldef)
+			termbox.SetCell(x+rx, y, r, e.fg, e.bg)
 		}
 		lx += 1
 		t = t[size:]
 	}
 
 	if e.line_voffset != 0 {
-		termbox.SetCell(x, y, '←', coldef, coldef)
+		termbox.SetCell(x, y, '←', e.fg, e.bg)
 	}
 }
 

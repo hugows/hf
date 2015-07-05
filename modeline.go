@@ -20,8 +20,13 @@ type Modeline struct {
 }
 
 func NewModeline(x, y, w int) *Modeline {
-	e := new(Editbox)
-	return &Modeline{x, y, w, false, false, e}
+	input := new(Editbox)
+	input.fg = termbox.ColorDefault
+	input.bg = termbox.ColorDefault
+	return &Modeline{
+		x: x, y: y, w: w,
+		input: input,
+	}
 }
 
 func (m *Modeline) Summarize(results *ResultsView) string {
@@ -41,7 +46,7 @@ func (m *Modeline) Summarize(results *ResultsView) string {
 	return s
 }
 
-func (m *Modeline) Draw(results *ResultsView) {
+func (m *Modeline) Draw(results *ResultsView, active bool) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
 	summary := m.Summarize(results) //.Summarize(m.paused)
@@ -52,7 +57,10 @@ func (m *Modeline) Draw(results *ResultsView) {
 	spaceLeft := m.w - spaceForCursor - len(summary)
 	m.input.Draw(m.x+spaceForCursor, m.y, spaceLeft)
 	termbox.SetCell(0, m.y, '>', coldef, coldef)
-	termbox.SetCursor(spaceForCursor+m.input.CursorX(), m.y)
+
+	if active {
+		termbox.SetCursor(spaceForCursor+m.input.CursorX(), m.y)
+	}
 }
 
 func (m *Modeline) Contents() string {

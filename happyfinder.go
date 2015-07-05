@@ -55,8 +55,8 @@ func main() {
 	fileset := new(ResultSet)
 
 	w, h := termbox.Size()
+	cmdline := NewCommandLine(0, h-2, w, "vim")
 	modeline := NewModeline(0, h-1, w)
-	cmdline := new(CommandLine)
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 
@@ -94,8 +94,10 @@ func main() {
 	// Command name is:
 	// os.Args[0]
 
-	modeline.Draw(&rview)
-	cmdline.Draw(0, h-2, w)
+	activeEditbox := modeline.input
+
+	modeline.Draw(&rview, true)
+	cmdline.Draw(0, h-2, w, false)
 	rview.SetSize(0, 0, w, h-2)
 	termbox.Flush()
 
@@ -153,28 +155,42 @@ func main() {
 				case termbox.KeyArrowDown, termbox.KeyCtrlN:
 					cmdline.Update(rview.SelectNext())
 				case termbox.KeyArrowLeft, termbox.KeyCtrlB:
-					modeline.input.MoveCursorOneRuneBackward()
+					activeEditbox.MoveCursorOneRuneBackward()
 				case termbox.KeyArrowRight, termbox.KeyCtrlF:
-					modeline.input.MoveCursorOneRuneForward()
+					activeEditbox.MoveCursorOneRuneForward()
 				case termbox.KeyBackspace, termbox.KeyBackspace2:
-					modeline.input.DeleteRuneBackward()
-					forceSortCh <- true
+					activeEditbox.DeleteRuneBackward()
+					if activeEditbox == modeline.input {
+						forceSortCh <- true
+					}
 				case termbox.KeyDelete, termbox.KeyCtrlD:
-					modeline.input.DeleteRuneForward()
-					forceSortCh <- true
+					activeEditbox.DeleteRuneForward()
+					if activeEditbox == modeline.input {
+						forceSortCh <- true
+					}
+				case termbox.KeyTab:
+					if activeEditbox == modeline.input {
+						activeEditbox = cmdline.input
+					} else {
+						activeEditbox = modeline.input
+					}
 				case termbox.KeySpace:
 					rview.ToggleMark()
 				case termbox.KeyCtrlK:
-					modeline.input.DeleteTheRestOfTheLine()
-					forceSortCh <- true
+					activeEditbox.DeleteTheRestOfTheLine()
+					if activeEditbox == modeline.input {
+						forceSortCh <- true
+					}
 				case termbox.KeyHome, termbox.KeyCtrlA:
-					modeline.input.MoveCursorToBeginningOfTheLine()
+					activeEditbox.MoveCursorToBeginningOfTheLine()
 				case termbox.KeyEnd, termbox.KeyCtrlE:
-					modeline.input.MoveCursorToEndOfTheLine()
+					activeEditbox.MoveCursorToEndOfTheLine()
 				default:
 					if ev.Ch != 0 {
-						modeline.input.InsertRune(ev.Ch)
-						forceSortCh <- true
+						activeEditbox.InsertRune(ev.Ch)
+						if activeEditbox == modeline.input {
+							forceSortCh <- true
+						}
 					}
 				}
 			case termbox.EventError:
@@ -182,8 +198,8 @@ func main() {
 			}
 		}
 
-		modeline.Draw(&rview)
-		cmdline.Draw(0, h-2, w)
+		modeline.Draw(&rview, activeEditbox == modeline.input)
+		cmdline.Draw(0, h-2, w, activeEditbox == cmdline.input)
 		rview.Draw()
 		termbox.Flush()
 	}
