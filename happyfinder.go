@@ -179,8 +179,12 @@ func main() {
 						activeEditbox = modeline.input
 					}
 				case termbox.KeySpace:
-					rview.ToggleMark()
-					cmdline.Update(rview.GetMarkedOrSelected())
+					if activeEditbox == modeline.input {
+						rview.ToggleMark()
+						cmdline.Update(rview.GetMarkedOrSelected())
+					} else {
+						activeEditbox.InsertRune(ev.Ch)
+					}
 				case termbox.KeyCtrlK:
 					activeEditbox.DeleteTheRestOfTheLine()
 					if activeEditbox == modeline.input {
