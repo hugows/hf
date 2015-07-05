@@ -4,10 +4,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 )
 
-func runCmdWithArgs(f string) {
-	cmd := exec.Command(*cmd, f)
+func runCmdWithArgs(rawcmd string) {
+	parts := strings.Split(rawcmd, " ")
+	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

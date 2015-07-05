@@ -27,7 +27,7 @@ func getRoot() string {
 }
 
 // hf --cmd=emacs ~/go/src/github.com/hugows/ happy
-var cmd = flag.String("cmd", "vim", "command to run")
+var flagCmd = flag.String("cmd", "vim", "command to run")
 
 func main() {
 	flag.Parse()
@@ -55,7 +55,7 @@ func main() {
 	fileset := new(ResultSet)
 
 	w, h := termbox.Size()
-	cmdline := NewCommandLine(0, h-2, w, "vim")
+	cmdline := NewCommandLine(0, h-2, w, *flagCmd)
 	modeline := NewModeline(0, h-1, w)
 
 	idleTimer := time.NewTimer(1 * time.Hour)
@@ -146,7 +146,7 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					// runCmdWithArgs(rview.FormatSelected())
+					runCmdWithArgs(cmdline.input.Contents())
 					return
 				case termbox.KeyCtrlT:
 					rview.ToggleMarkAll()
@@ -177,6 +177,9 @@ func main() {
 					} else {
 						activeEditbox = modeline.input
 					}
+					// reset user edit to keep things simple...
+					cmdline.Update(rview.GetMarkedOrSelected())
+
 				case termbox.KeySpace:
 					if activeEditbox == modeline.input {
 						rview.ToggleMark()
