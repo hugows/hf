@@ -104,9 +104,7 @@ func main() {
 	for {
 		select {
 		case <-forceDrawCh:
-			// bug
-			// rview.SelectFirst()
-			/* redraw */
+			rview.SelectFirst()
 
 		case <-idleTimer.C:
 			idleTimer = time.NewTimer(1 * time.Hour)
@@ -134,9 +132,10 @@ func main() {
 			}
 
 		case ev := <-termboxEventCh:
-			idleTimer.Reset(pauseAfterKeypress)
 			if fileCh == nil {
 				modeline.FlagPause(false)
+			} else {
+				idleTimer.Reset(pauseAfterKeypress)
 			}
 
 			switch ev.Type {
