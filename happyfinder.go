@@ -86,7 +86,7 @@ func main() {
 			<-forceSortCh
 			filtered := fileset.Filter(global_lastkeypress, modeline.Contents())
 			rview.Update(filtered.results)
-			cmdline.Update(rview.GetSelected())
+			cmdline.Update(rview.GetMarkedOrSelected())
 			forceDrawCh <- true
 		}
 	}()
@@ -104,7 +104,8 @@ func main() {
 	for {
 		select {
 		case <-forceDrawCh:
-			rview.SelectFirst()
+			// bug
+			// rview.SelectFirst()
 			/* redraw */
 
 		case <-idleTimer.C:
@@ -150,10 +151,13 @@ func main() {
 					return
 				case termbox.KeyCtrlT:
 					rview.ToggleMarkAll()
+					cmdline.Update(rview.GetMarkedOrSelected())
 				case termbox.KeyArrowUp, termbox.KeyCtrlP:
-					cmdline.Update(rview.SelectPrevious())
+					rview.SelectPrevious()
+					cmdline.Update(rview.GetMarkedOrSelected())
 				case termbox.KeyArrowDown, termbox.KeyCtrlN:
-					cmdline.Update(rview.SelectNext())
+					rview.SelectNext()
+					cmdline.Update(rview.GetMarkedOrSelected())
 				case termbox.KeyArrowLeft, termbox.KeyCtrlB:
 					activeEditbox.MoveCursorOneRuneBackward()
 				case termbox.KeyArrowRight, termbox.KeyCtrlF:
@@ -176,6 +180,7 @@ func main() {
 					}
 				case termbox.KeySpace:
 					rview.ToggleMark()
+					cmdline.Update(rview.GetMarkedOrSelected())
 				case termbox.KeyCtrlK:
 					activeEditbox.DeleteTheRestOfTheLine()
 					if activeEditbox == modeline.input {

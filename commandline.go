@@ -1,6 +1,10 @@
 package main
 
-import "github.com/nsf/termbox-go"
+import (
+	"fmt"
+
+	"github.com/nsf/termbox-go"
+)
 
 type CommandLine struct {
 	// dimensions
@@ -10,7 +14,11 @@ type CommandLine struct {
 	input *Editbox
 
 	// program to call
-	originalCmd string
+	cmd string
+
+	// cached
+	fullCmdline       string
+	summarizedCmdline string
 }
 
 func NewCommandLine(x, y, w int, cmd string) *CommandLine {
@@ -20,27 +28,37 @@ func NewCommandLine(x, y, w int, cmd string) *CommandLine {
 
 	return &CommandLine{
 		x: x, y: y, w: w,
-		input:       input,
-		originalCmd: cmd,
+		input: input,
+		cmd:   cmd,
 	}
 }
 
-func (cmd *CommandLine) Update(r *Result) {
-	if r != nil {
-		cmd.input.text = []byte(r.displayContents)
+func (cmd *CommandLine) Update(results ResultArray) {
+	text := cmd.cmd
+
+	for _, res := range results {
+		text = text + " " + res.displayContents
+	}
+	cmd.input.text = []byte(text)
+	cmd.fullCmdline = text
+	cmd.summarizedCmdline = fmt.Sprintf("%s <%d files...>", cmd.cmd, len(results))
+}
+
+func (cmd *CommandLine) SummarizeCommand(maxlen int) string {
+	if len(cmd.fullCmdline) > maxlen {
+		return cmd.summarizedCmdline
 	} else {
-		cmd.input.text = []byte("")
+		return cmd.fullCmdline
 	}
 }
 
 func (cmd *CommandLine) Draw(x, y, w int, active bool) {
-	// tclearcolor(x, y, w, 1, bg)
-	// text := cmd.originalCmd + " ---------" + cmd.input.Contents() //+ " (RET to run)"
-	// tbprint(x, y, fg, bg, text)
-
-	cmd.input.Draw(x, y, w)
-
 	if active {
+		cmd.input.Draw(x, y, w)
 		termbox.SetCursor(cmd.input.CursorX(), cmd.y)
+	} else {
+		tclearcolor(x, y, w, 1, cmd.input.bg)
+		tbprint(x, y, cmd.input.fg, cmd.input.bg, cmd.SummarizeCommand(w))
 	}
+
 }

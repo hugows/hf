@@ -35,7 +35,7 @@ func (r *ResultsView) SelectFirst() {
 	}
 }
 
-func (r *ResultsView) SelectPrevious() *Result {
+func (r *ResultsView) SelectPrevious() {
 	if r.result_selected > 0 {
 		r.result_selected--
 	}
@@ -43,14 +43,9 @@ func (r *ResultsView) SelectPrevious() *Result {
 		r.top_result--
 		r.bottom_result--
 	}
-
-	if len(r.results) > 0 && r.result_selected < len(r.results) {
-		return r.results[r.result_selected]
-	}
-	return nil
 }
 
-func (r *ResultsView) SelectNext() *Result {
+func (r *ResultsView) SelectNext() {
 	if r.result_selected < (r.result_count - 1) {
 		r.result_selected++
 
@@ -59,11 +54,6 @@ func (r *ResultsView) SelectNext() *Result {
 			r.bottom_result++
 		}
 	}
-
-	if len(r.results) > 0 && r.result_selected < len(r.results) {
-		return r.results[r.result_selected]
-	}
-	return nil
 }
 
 func tbprint(x, y int, fg, bg termbox.Attribute, msg string) {
@@ -116,9 +106,23 @@ func (r *ResultsView) Update(results ResultArray) {
 
 }
 
-func (r *ResultsView) GetSelected() *Result {
-	if len(r.results) > 0 && r.result_selected < len(r.results) {
-		return r.results[r.result_selected]
+// If there isnt any marked, return the selection. Otherwise return the array of marked results.
+func (rv *ResultsView) GetMarkedOrSelected() ResultArray {
+	selected := make(ResultArray, 0, 1)
+
+	for _, res := range rv.results {
+		if res.marked {
+			selected = append(selected, res)
+		}
 	}
-	return nil
+
+	if len(selected) > 0 {
+		return selected
+	}
+
+	if len(rv.results) > 0 && rv.result_selected < len(rv.results) {
+		selected = append(selected, rv.results[rv.result_selected])
+	}
+
+	return selected
 }
