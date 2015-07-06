@@ -29,6 +29,7 @@ func findGitRoot(path string) (bool, string) {
 		if isGitRoot(path) {
 			return true, path
 		} else {
+			fmt.Println(path, filepath.Dir(path))
 			path = filepath.Dir(path)
 		}
 	}

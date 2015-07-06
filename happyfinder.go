@@ -60,7 +60,15 @@ func main() {
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 
-	fileCh := walkFiles(getRoot())
+	isGit, gitRoot := findGitRoot(root)
+	var walkRoot string
+	if isGit {
+		walkRoot = gitRoot
+	} else {
+		walkRoot = root
+	}
+	fileCh := walkFiles(walkRoot)
+
 	// fileCh := walkFilesFake(2500)
 	termboxEventCh := make(chan termbox.Event)
 
@@ -105,6 +113,12 @@ func main() {
 		select {
 		case <-forceDrawCh:
 			rview.SelectFirst()
+			// so fast mode
+			// if fileCh == nil && rview.result_count == 1 {
+			// 	termbox.Close()
+			// 	runCmdWithArgs(cmdline.input.Contents())
+			// 	return
+			// }
 
 		case <-idleTimer.C:
 			idleTimer = time.NewTimer(1 * time.Hour)
