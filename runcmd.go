@@ -7,9 +7,10 @@ import (
 	"strings"
 )
 
-func runCmdWithArgs(rawcmd string) {
+func runCmdWithArgs(rundir, rawcmd string) {
 	parts := strings.Split(rawcmd, " ")
 	cmd := exec.Command(parts[0], parts[1:]...)
+	cmd.Dir = rundir
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

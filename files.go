@@ -29,11 +29,35 @@ func findGitRoot(path string) (bool, string) {
 		if isGitRoot(path) {
 			return true, path
 		} else {
-			fmt.Println(path, filepath.Dir(path))
+			if path == filepath.Dir(path) {
+				panic("findGitRoot will loop")
+			}
 			path = filepath.Dir(path)
 		}
 	}
 	return false, ""
+}
+
+func findGitRootDwim(startPath string) string {
+	var isGit bool
+	var gitRoot string
+
+	absRoot, err := filepath.Abs(startPath)
+	if err != nil {
+		absRoot = startPath
+	}
+
+	if withoutLinks, err := filepath.EvalSymlinks(absRoot); err == nil {
+		absRoot = withoutLinks
+	}
+
+	isGit, gitRoot = findGitRoot(absRoot)
+	if isGit {
+		return gitRoot
+	} else {
+		return startPath
+	}
+
 }
 
 // Recursively outputs each file in the root directory
@@ -63,8 +87,12 @@ func walkFiles(root string) <-chan string {
 					return nil
 				}
 			}
+			// fmt.Println(abspath, abspathclean, path)
 
 			if info != nil && info.Mode()&os.ModeType == 0 {
+				if strings.HasPrefix(path, root) {
+					path = path[len(root)+1:]
+				}
 				out <- path
 			}
 

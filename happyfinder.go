@@ -59,15 +59,8 @@ func main() {
 	modeline := NewModeline(0, h-1, w)
 
 	idleTimer := time.NewTimer(1 * time.Hour)
-
-	isGit, gitRoot := findGitRoot(root)
-	var walkRoot string
-	if isGit {
-		walkRoot = gitRoot
-	} else {
-		walkRoot = root
-	}
-	fileCh := walkFiles(walkRoot)
+	dwimRoot := findGitRootDwim(root)
+	fileCh := walkFiles(dwimRoot)
 
 	// fileCh := walkFilesFake(2500)
 	termboxEventCh := make(chan termbox.Event)
@@ -160,7 +153,7 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					runCmdWithArgs(cmdline.input.Contents())
+					runCmdWithArgs(dwimRoot, cmdline.input.Contents())
 					return
 				case termbox.KeyCtrlT:
 					rview.ToggleMarkAll()
