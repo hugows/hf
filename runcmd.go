@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// built-in windows:
+// cmd := exec.Command("cmd","/c","del","a")
 func runCmdWithArgs(rundir, rawcmd string) {
 	parts := strings.Split(rawcmd, " ")
 	cmd := exec.Command(parts[0], parts[1:]...)
