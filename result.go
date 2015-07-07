@@ -15,8 +15,7 @@ type Result struct {
 	score           int          // what is the score for this particular result?
 }
 
-// const CHECKMARK_CHAR = " ✓"
-const CHECKMARK_CHAR = " * "
+const CHECKMARK_CHAR = " * " // " ✓"
 
 func (res Result) Draw(x, y, w int, selected bool) {
 	CHECKMARK_PAD := strings.Repeat(" ", len(CHECKMARK_CHAR))
