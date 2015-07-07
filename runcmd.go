@@ -5,11 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"runtime"
 )
 
-// built-in windows:
-// cmd := exec.Command("cmd","/c","del","a")
-func runCmdWithArgs(rundir, rawcmd string) {
+func runCmdInternal(rundir, rawcmd string) error {
 	parts := strings.Split(rawcmd, " ")
 	cmd := exec.Command(parts[0], parts[1:]...)
 	cmd.Dir = rundir
@@ -17,7 +16,23 @@ func runCmdWithArgs(rundir, rawcmd string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
+	return err
+}
+
+// built-in windows:
+// cmd := exec.Command("cmd","/c","del","a")
+func runCmdWithArgs(rundir, rawcmd string) {
+	err := runCmdInternal(rundir, rawcmd)
+
 	if err != nil {
-		log.Fatal(err)
+		if runtime.GOOS == "windows" {
+			rawcmd = "cmd /k" + rawcmd
+		} else {
+			rawcmd = "sh -c" + rawcmd
+		}
+		err = runCmdInternal(rundir, rawcmd)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }

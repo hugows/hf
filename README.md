@@ -56,6 +56,4 @@ When running:
 ## Issues
 
 - handle termbox resize event
-- run shell built ins like del on win (use cmd /k on windows, sh -c on linux)
-- differentiate between git projects and submodules?
-- stable sorting problems
+- stable sorting problems?
