@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -18,32 +17,25 @@ var (
 	global_lastkeypress int64
 )
 
-func getRoot() string {
-	if len(flag.Args()) == 0 {
-		return "."
-	} else {
-		return flag.Arg(0)
-	}
-}
-
-// hf --cmd=emacs ~/go/src/github.com/hugows/ happy
-var flagCmd = flag.String("cmd", "vim", "command to run")
-
 func main() {
-	flag.Parse()
+	// flag.Parse()
+	opts, err := ParseArgs()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	var rview ResultsView
 
-	root := getRoot()
-	fi, err := os.Stat(root)
+	fi, err := os.Stat(opts.rootDir)
 	if err != nil {
 		fmt.Println(err)
-		return
+		os.Exit(1)
 	}
 
 	if !fi.IsDir() {
-		fmt.Println(root, "is NOT a folder")
-		return
+		fmt.Println(opts.rootDir, "is NOT a folder")
+		os.Exit(1)
 	}
 
 	err = termbox.Init()
@@ -55,12 +47,11 @@ func main() {
 	fileset := new(ResultSet)
 
 	w, h := termbox.Size()
-	cmdline := NewCommandLine(0, h-2, w, *flagCmd)
+	cmdline := NewCommandLine(0, h-2, w, opts.runCmd)
 	modeline := NewModeline(0, h-1, w)
 
 	idleTimer := time.NewTimer(1 * time.Hour)
-	dwimRoot := findGitRootDwim(root)
-	fileCh := walkFiles(dwimRoot)
+	fileCh := walkFiles(opts.rootDir)
 
 	// fileCh := walkFilesFake(2500)
 	termboxEventCh := make(chan termbox.Event)
@@ -92,11 +83,7 @@ func main() {
 		}
 	}()
 
-	// Command name is:
-	// os.Args[0]
-
 	activeEditbox := modeline.input
-
 	modeline.Draw(&rview, true)
 	cmdline.Draw(0, h-2, w, false)
 	rview.SetSize(0, 0, w, h-2)
@@ -106,12 +93,6 @@ func main() {
 		select {
 		case <-forceDrawCh:
 			rview.SelectFirst()
-			// so fast mode
-			// if fileCh == nil && rview.result_count == 1 {
-			// 	termbox.Close()
-			// 	runCmdWithArgs(cmdline.input.Contents())
-			// 	return
-			// }
 
 		case <-idleTimer.C:
 			idleTimer = time.NewTimer(1 * time.Hour)
@@ -153,7 +134,7 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					runCmdWithArgs(dwimRoot, cmdline.input.Contents())
+					runCmdWithArgs(opts.rootDir, cmdline.input.Contents())
 					return
 				case termbox.KeyCtrlT:
 					rview.ToggleMarkAll()

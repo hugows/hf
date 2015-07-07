@@ -2,5 +2,7 @@
 
 This will be a command line utility to quickly find files and execute actions - something like Helm/Anything/CtrlP for the terminal.
 
-# TODO
-git support (--git), should we be heuristic?
+# Issues
+
+- run shell built ins (cmd /k on windows, sh -c on linux)
+- differentiate between git proejcts and submodules?

@@ -49,6 +49,4 @@ func (res Result) Draw(x, y, w int, selected bool) {
 		termbox.SetCell(x, y, c, fg, bg)
 		x++
 	}
-
-	// tclear(x, y, w, 1)
 }
