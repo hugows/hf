@@ -2,6 +2,10 @@
 
 hf is a command line utility to quickly find files and execute a command - something like Helm/Anything/CtrlP for the terminal.
 
+Maybe its better to see it in action:
+
+![happyfinder on windows](https://dl.dropboxusercontent.com/u/19746944/hf_win.gif)
+
 If you have any suggestions, please open an issue!
 
 ## Installation
