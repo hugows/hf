@@ -55,5 +55,6 @@ When running:
 
 ## Issues
 
-- run shell built ins (cmd /k on windows, sh -c on linux)
-- differentiate between git proejcts and submodules?
+- run shell built ins (use cmd /k on windows, sh -c on linux)
+- differentiate between git projects and submodules?
+- handle resize events
