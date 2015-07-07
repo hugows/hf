@@ -61,7 +61,7 @@ const usage string = `Use happyfinder like this:
 
   hf [path] [command]
 
-The default path is the current folder. 
+The default path is the current folder.
 The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim (subl on Windows).
 
 To find in your git project, use:
@@ -70,7 +70,7 @@ To find in your git project, use:
 
  (if -git is provided, then next argument (optional) is assumed to be a command)
 
-If the binary name is 'hfg', the -git option is assumed. 
+If the binary name is 'hfg', the -git option is assumed.
 This was done because Windows users have no easy way of creating command aliases.
 
 Examples:
@@ -85,10 +85,10 @@ When running:
     a-z0-9      Edit input string (those also work: backspace/C-a/C-e/C-k/Home/End)
     Up/down     Move cursor to next file
     Space       Toggle mark for current file and move to next
-    C-t         Toggle mark for all files 
+    C-t         Toggle mark for all files
     TAB         Jump to edit command (and back)
     RET         Run command
-    ESC         Quit 
+    ESC         Quit
 
 `
 
@@ -119,7 +119,7 @@ func ParseArgs() (opts *Options, err error) {
 	}
 
 	// this is hacky :(
-	if strings.HasSuffix(opts.command, "hfg") {
+	if strings.HasSuffix(opts.command, "hfg") || strings.HasSuffix(opts.command, "hfg.exe") {
 		opts.git = true
 	}
 
