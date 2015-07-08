@@ -192,6 +192,8 @@ func main() {
 						}
 					}
 				}
+			case termbox.EventResize:
+
 			case termbox.EventError:
 				panic(ev.Err)
 			}
