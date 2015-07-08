@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/davecheney/profile"
 	"github.com/nsf/termbox-go"
 )
 
@@ -18,14 +19,14 @@ var (
 )
 
 func main() {
-	// flag.Parse()
+	defer profile.Start(profile.CPUProfile).Stop()
+
 	opts, err := ParseArgs()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	var rview ResultsView
 
 	fi, err := os.Stat(opts.rootDir)
 	if err != nil {
@@ -46,6 +47,7 @@ func main() {
 
 	fileset := new(ResultSet)
 
+	var rview ResultsView
 	windowWidth, windowHeight := termbox.Size()
 	cmdline := NewCommandLine(opts.runCmd)
 	modeline := NewModeline()
