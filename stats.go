@@ -7,34 +7,29 @@ import (
 )
 
 type Stats struct {
-	sync.Mutex
+	sync.RWMutex
 	start    time.Time
-	counters map[string]int32
+	counters map[string]int
 }
 
 func NewStats() *Stats {
 	return &Stats{
-		counters: make(map[string]int32),
+		counters: make(map[string]int),
 		start:    time.Now(),
 	}
 }
 
 func (s *Stats) Inc(key string) {
 	s.Lock()
-	val, ok := s.counters[key]
-	if ok {
-		s.counters[key] = val + 1
-	} else {
-		s.counters[key] = 1
-	}
+	s.counters[key]++
 	s.Unlock()
 }
 
 func (s *Stats) Print() {
-	s.Lock()
-	fmt.Println("*** stats *** - program ran for", time.Since(s.start))
+	s.RLock()
+	fmt.Println("*** stats - elapsed time was", time.Since(s.start),"***")
 	for k, v := range s.counters {
-		fmt.Printf("%6d call(s) %s\n", v, k)
+		fmt.Printf("%5d call(s) %s\n", v, k)
 	}
-	s.Unlock()
+	s.RUnlock()
 }
