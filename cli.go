@@ -181,5 +181,6 @@ func ParseArgs() (opts *Options, err error) {
 		err = errors.New("Could not parse options")
 	}
 
+	opts.rootDir = filepath.Clean(opts.rootDir)
 	return
 }
