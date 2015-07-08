@@ -1,4 +1,4 @@
-# happyfinder
+# happyfinder [![Build Status](https://travis-ci.org/hugows/hf.svg?branch=master)](https://travis-ci.org/hugows/hf)
 
 hf is a command line utility to quickly find files and execute a command - something like Helm/Anything/CtrlP for the terminal.
 
