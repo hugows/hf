@@ -58,3 +58,5 @@ When running:
 - stable sorting problems?
 - command line could use a variable like $FILES to allow "safe editing"
 - show (git:folder) and (folder:) when not current folder
+
+- win: `paused' string not removed

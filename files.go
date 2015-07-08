@@ -28,6 +28,7 @@ func walkFiles(root string) <-chan string {
 					elem[0] == '#' ||
 					elem[0] == '~' ||
 					elem[len(elem)-1] == '~' ||
+					strings.HasSuffix(elem, "AppData") ||
 					strings.HasSuffix(elem, ".app") {
 					if info.IsDir() {
 						return filepath.SkipDir
