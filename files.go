@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Recursively outputs each file in the root directory
@@ -56,7 +57,8 @@ func walkFilesFake(count int) <-chan string {
 
 	go func() {
 		for i := 0; i < count; i++ {
-			out <- fmt.Sprintf("brasil%d", i)
+			out <- fmt.Sprintf("blablabla%d", i)
+			time.Sleep(10 * time.Millisecond)
 		}
 
 		close(out)

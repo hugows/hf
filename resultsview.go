@@ -1,6 +1,10 @@
 package main
 
-import "github.com/nsf/termbox-go"
+import (
+	"errors"
+
+	"github.com/nsf/termbox-go"
+)
 
 type ResultsView struct {
 	// Array of results to be filtered
@@ -82,10 +86,14 @@ func (r *ResultsView) ToggleMark() {
 	}
 }
 
-func (r *ResultsView) ToggleMarkAll() {
+func (r *ResultsView) ToggleMarkAll() error {
+	if len(r.results) > 1000 {
+		return errors.New("too many files to mark! I WONT DO IT!")
+	}
 	for _, res := range r.results {
 		res.marked = !res.marked
 	}
+	return nil
 }
 
 func (r *ResultsView) SetSize(x, y, w, h int) {

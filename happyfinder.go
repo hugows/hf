@@ -53,9 +53,14 @@ func main() {
 	modeline := NewModeline()
 
 	idleTimer := time.NewTimer(1 * time.Hour)
-	fileCh := walkFiles(opts.rootDir)
 
-	// fileCh := walkFilesFake(2500)
+	var fileCh <-chan string
+	if opts.fakefiles > 0 {
+		fileCh = walkFilesFake(2500)
+	} else {
+		fileCh = walkFiles(opts.rootDir)
+	}
+
 	termboxEventCh := make(chan termbox.Event)
 
 	forceDrawCh := make(chan bool, 100)
@@ -108,10 +113,10 @@ func main() {
 				forceSortCh <- true
 			} else {
 				idleTimer.Reset(redrawPause)
-				skipDraw = true
 			}
 
 		case filename, ok := <-fileCh:
+			stats.Inc("fileCh")
 			modeline.FlagPause(time.Since(timeLastUser) < pauseAfterKeypress)
 			if ok {
 				fileset.Insert(filename)
@@ -149,7 +154,10 @@ func main() {
 					runCmdWithArgs(opts.rootDir, cmdline.input.Contents())
 					return
 				case termbox.KeyCtrlT:
-					rview.ToggleMarkAll()
+					err := rview.ToggleMarkAll()
+					if err != nil {
+						cmdline.ShowError(forceDrawCh, err)
+					}
 					cmdline.Update(rview.GetMarkedOrSelected())
 				case termbox.KeyArrowUp, termbox.KeyCtrlP:
 					rview.SelectPrevious()

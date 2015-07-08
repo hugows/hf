@@ -93,7 +93,9 @@ When running:
 `
 
 type Options struct {
-	debug        bool   // debug mode (print stats when closing, etc)
+	debug     bool // debug mode (print stats when closing, etc)
+	fakefiles int  // generate fake filenames for testing performance
+
 	git          bool   // user wants to search in git project
 	command      string // name of binary
 	rootDir      string // path to recursively search
@@ -106,23 +108,18 @@ func ParseArgs() (opts *Options, err error) {
 		fmt.Fprintf(os.Stderr, usage)
 	}
 
-	git := flag.Bool(
-		"git",
-		false,
-		"Find in current git project instead of folder")
-
-	debug := flag.Bool(
-		"debug",
-		false,
-		"Print stats in the end (debug only)")
+	git := flag.Bool("git", false, "Find in current git project instead of folder")
+	debug := flag.Bool("debug", false, "Print stats in the end (debug only)")
+	fakefiles := flag.Int("fakefiles", 0, "Generate N fake file names for testing")
 
 	flag.Parse()
 
 	opts = &Options{
-		debug:   *debug,
-		git:     *git,
-		command: os.Args[0],
-		runCmd:  "vim",
+		debug:     *debug,
+		fakefiles: *fakefiles,
+		git:       *git,
+		command:   os.Args[0],
+		runCmd:    "vim",
 	}
 
 	// this is hacky :(

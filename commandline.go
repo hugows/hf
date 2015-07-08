@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/nsf/termbox-go"
 )
@@ -12,6 +13,10 @@ type CommandLine struct {
 
 	// program to call
 	cmd string
+
+	// use space for showing errors too
+	showingError  bool
+	modelineError string
 
 	// cached
 	fullCmdline       string
@@ -49,7 +54,24 @@ func (cmd *CommandLine) SummarizeCommand(maxlen int) string {
 	}
 }
 
+func (cmd *CommandLine) ShowError(redraw chan bool, err error) {
+	cmd.showingError = true
+	cmd.modelineError = "Error: " + err.Error()
+	clearErrorTimer := time.NewTimer(1 * time.Second)
+	go func() {
+		<-clearErrorTimer.C
+		cmd.showingError = false
+		redraw <- true
+	}()
+}
+
 func (cmd *CommandLine) Draw(x, y, w int, active bool) {
+	if cmd.showingError {
+		tclearcolor(x, y, w, 1, cmd.input.bg)
+		tbprint(x, y, termbox.ColorRed, cmd.input.bg, cmd.modelineError)
+		return
+	}
+
 	if active {
 		cmd.input.Draw(x, y, w)
 		termbox.SetCursor(cmd.input.CursorX(), y)

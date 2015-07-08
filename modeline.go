@@ -48,6 +48,7 @@ func (m *Modeline) Summarize(results *ResultsView) string {
 func (m *Modeline) Draw(x, y, w int, results *ResultsView, active bool) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
+
 	summary := m.Summarize(results) //.Summarize(m.paused)
 
 	tbprint(w-len(summary), y, termbox.ColorCyan|termbox.AttrBold, coldef, summary)
