@@ -4,33 +4,39 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 	"runtime"
 )
 
-func runCmdInternal(rundir, rawcmd string) error {
-	parts := strings.Split(rawcmd, " ")
-	cmd := exec.Command(parts[0], parts[1:]...)
-	cmd.Dir = rundir
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+func runCmdInternal(rundir, cmd string, args []string) error {
+	exec := exec.Command(cmd, args...)
+	exec.Dir = rundir
+	exec.Stdin = os.Stdin
+	exec.Stdout = os.Stdout
+	exec.Stderr = os.Stderr
+	err := exec.Run()
 	return err
 }
 
-// built-in windows:
-// cmd := exec.Command("cmd","/c","del","a")
-func runCmdWithArgs(rundir, rawcmd string) {
-	err := runCmdInternal(rundir, rawcmd)
+func runCmdWithArgs(rundir, cmd string, args []string) {
+	err := runCmdInternal(rundir, cmd, args)
 
 	if err != nil {
+		var newcmd string
+		newargs := make([]string, len(args))
 		if runtime.GOOS == "windows" {
-			rawcmd = "cmd /k" + rawcmd
+			newcmd = "cmd"
+			newargs = append(newargs, "/c")
 		} else {
-			rawcmd = "sh -c" + rawcmd
+			newcmd = "sh"
+			newargs = append(newargs, "-c")
 		}
-		err = runCmdInternal(rundir, rawcmd)
+
+		newargs = append(newargs, cmd)
+		for _, a := range args {
+			newargs = append(newargs, a)
+		}
+
+		err = runCmdInternal(rundir, newcmd, newargs)
 		if err != nil {
 			log.Fatal(err)
 		}

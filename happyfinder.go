@@ -151,7 +151,8 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					runCmdWithArgs(opts.rootDir, cmdline.input.Contents())
+					// runCmdWithArgs(opts.rootDir, cmdline.input.Contents())
+					runCmdWithArgs(opts.rootDir, cmdline.cmd, cmdline.cmdargs)
 					return
 				case termbox.KeyCtrlT:
 					err := rview.ToggleMarkAll()

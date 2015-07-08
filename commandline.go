@@ -12,7 +12,8 @@ type CommandLine struct {
 	input *Editbox
 
 	// program to call
-	cmd string
+	cmd     string
+	cmdargs []string
 
 	// use space for showing errors too
 	showingError  bool
@@ -36,9 +37,11 @@ func NewCommandLine(cmd string) *CommandLine {
 
 func (cmd *CommandLine) Update(results ResultArray) {
 	text := cmd.cmd
+	cmd.cmdargs = make([]string, 0, len(results))
 
 	for _, res := range results {
 		text = text + " " + res.displayContents
+		cmd.cmdargs = append(cmd.cmdargs, res.displayContents)
 	}
 	cmd.input.text = []byte(text)
 	cmd.input.MoveCursorToBeginningOfTheLine()

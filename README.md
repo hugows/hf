@@ -56,3 +56,4 @@ When running:
 ## Issues
 
 - stable sorting problems?
+- new runcmd prevents user from editing command line, think about it
