@@ -56,4 +56,5 @@ When running:
 ## Issues
 
 - stable sorting problems?
-- new runcmd prevents user from editing command line, think about it
+- command line could use a variable like $FILES to allow "safe editing"
+- show (git:folder) and (folder:) when not current folder
