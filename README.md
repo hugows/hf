@@ -55,5 +55,4 @@ When running:
 
 ## Issues
 
-- handle termbox resize event
 - stable sorting problems?

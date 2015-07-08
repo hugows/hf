@@ -46,9 +46,9 @@ func main() {
 
 	fileset := new(ResultSet)
 
-	w, h := termbox.Size()
-	cmdline := NewCommandLine(0, h-2, w, opts.runCmd)
-	modeline := NewModeline(0, h-1, w)
+	windowWidth, windowHeight := termbox.Size()
+	cmdline := NewCommandLine(opts.runCmd)
+	modeline := NewModeline()
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 	fileCh := walkFiles(opts.rootDir)
@@ -84,9 +84,9 @@ func main() {
 	}()
 
 	activeEditbox := modeline.input
-	modeline.Draw(&rview, true)
-	cmdline.Draw(0, h-2, w, false)
-	rview.SetSize(0, 0, w, h-2)
+	modeline.Draw(0, windowHeight-1, windowWidth, &rview, true)
+	cmdline.Draw(0, windowHeight-2, windowWidth, false)
+	rview.SetSize(0, 0, windowWidth, windowHeight-2)
 	termbox.Flush()
 
 	for {
@@ -193,14 +193,18 @@ func main() {
 					}
 				}
 			case termbox.EventResize:
+				termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
+				windowHeight = ev.Height
+				windowWidth = ev.Width
+				rview.SetSize(0, 0, windowWidth, windowHeight-2)
 
 			case termbox.EventError:
 				panic(ev.Err)
 			}
 		}
 
-		modeline.Draw(&rview, activeEditbox == modeline.input)
-		cmdline.Draw(0, h-2, w, activeEditbox == cmdline.input)
+		modeline.Draw(0, windowHeight-1, windowWidth, &rview, activeEditbox == modeline.input)
+		cmdline.Draw(0, windowHeight-2, windowWidth, activeEditbox == cmdline.input)
 		rview.Draw()
 		termbox.Flush()
 	}

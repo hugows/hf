@@ -7,9 +7,6 @@ import (
 )
 
 type CommandLine struct {
-	// dimensions
-	x, y, w int
-
 	// allow user to edit it
 	input *Editbox
 
@@ -21,13 +18,12 @@ type CommandLine struct {
 	summarizedCmdline string
 }
 
-func NewCommandLine(x, y, w int, cmd string) *CommandLine {
+func NewCommandLine(cmd string) *CommandLine {
 	input := new(Editbox)
 	input.fg = termbox.ColorRed
 	input.bg = termbox.ColorDefault
 
 	return &CommandLine{
-		x: x, y: y, w: w,
 		input: input,
 		cmd:   cmd,
 	}
@@ -56,7 +52,7 @@ func (cmd *CommandLine) SummarizeCommand(maxlen int) string {
 func (cmd *CommandLine) Draw(x, y, w int, active bool) {
 	if active {
 		cmd.input.Draw(x, y, w)
-		termbox.SetCursor(cmd.input.CursorX(), cmd.y)
+		termbox.SetCursor(cmd.input.CursorX(), y)
 	} else {
 		tclearcolor(x, y, w, 1, cmd.input.bg)
 		tbprint(x, y, cmd.input.fg, cmd.input.bg, cmd.SummarizeCommand(w))
