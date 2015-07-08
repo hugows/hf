@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/davecheney/profile"
 	"github.com/nsf/termbox-go"
 )
 
@@ -19,14 +18,13 @@ var (
 )
 
 func main() {
-	defer profile.Start(profile.CPUProfile).Stop()
+	// defer profile.Start(profile.CPUProfile).Stop()
 
 	opts, err := ParseArgs()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 
 	fi, err := os.Stat(opts.rootDir)
 	if err != nil {
@@ -38,6 +36,8 @@ func main() {
 		fmt.Println(opts.rootDir, "is NOT a folder")
 		os.Exit(1)
 	}
+
+	stats := NewStats()
 
 	err = termbox.Init()
 	if err != nil {
@@ -67,6 +67,7 @@ func main() {
 	go func() {
 		for {
 			ev := termbox.PollEvent()
+			stats.Inc("termboxEvent")
 			if ev.Type == termbox.EventKey {
 				timeLastUser = time.Now()
 				global_lastkeypress = timeLastUser.UnixNano()
@@ -78,6 +79,7 @@ func main() {
 	go func() {
 		for {
 			<-forceSortCh
+			stats.Inc("forceSort")
 			filtered := fileset.Filter(global_lastkeypress, modeline.Contents())
 			rview.Update(filtered.results)
 			cmdline.Update(rview.GetMarkedOrSelected())
@@ -92,21 +94,25 @@ func main() {
 	termbox.Flush()
 
 	for {
+		skipDraw := false
+
 		select {
 		case <-forceDrawCh:
+			stats.Inc("forceDraw")
 			rview.SelectFirst()
 
 		case <-idleTimer.C:
+			stats.Inc("idleTimer")
 			idleTimer = time.NewTimer(1 * time.Hour)
 			if !modeline.paused && fileCh == nil {
 				forceSortCh <- true
 			} else {
 				idleTimer.Reset(redrawPause)
+				skipDraw = true
 			}
 
 		case filename, ok := <-fileCh:
 			modeline.FlagPause(time.Since(timeLastUser) < pauseAfterKeypress)
-
 			if ok {
 				fileset.Insert(filename)
 			} else {
@@ -114,6 +120,7 @@ func main() {
 				fileCh = nil
 			}
 
+			skipDraw = true
 			if !modeline.paused && time.Since(timeLastSort) > redrawPause {
 				forceSortCh <- true
 				timeLastSort = time.Now()
@@ -133,6 +140,9 @@ func main() {
 				switch ev.Key {
 				case termbox.KeyEsc, termbox.KeyCtrlC:
 					termbox.Close()
+					if opts.debug {
+						stats.Print()
+					}
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
@@ -201,14 +211,18 @@ func main() {
 				rview.SetSize(0, 0, windowWidth, windowHeight-2)
 
 			case termbox.EventError:
+				termbox.Close()
 				panic(ev.Err)
 			}
 		}
 
-		modeline.Draw(0, windowHeight-1, windowWidth, &rview, activeEditbox == modeline.input)
-		cmdline.Draw(0, windowHeight-2, windowWidth, activeEditbox == cmdline.input)
-		rview.Draw()
-		termbox.Flush()
+		if !skipDraw {
+			modeline.Draw(0, windowHeight-1, windowWidth, &rview, activeEditbox == modeline.input)
+			cmdline.Draw(0, windowHeight-2, windowWidth, activeEditbox == cmdline.input)
+			rview.Draw()
+			termbox.Flush()
+			stats.Inc("flush")
+		}
 	}
 
 }

@@ -93,6 +93,7 @@ When running:
 `
 
 type Options struct {
+	debug        bool   // debug mode (print stats when closing, etc)
 	git          bool   // user wants to search in git project
 	command      string // name of binary
 	rootDir      string // path to recursively search
@@ -110,9 +111,15 @@ func ParseArgs() (opts *Options, err error) {
 		false,
 		"Find in current git project instead of folder")
 
+	debug := flag.Bool(
+		"debug",
+		false,
+		"Print stats in the end (debug only)")
+
 	flag.Parse()
 
 	opts = &Options{
+		debug:   *debug,
 		git:     *git,
 		command: os.Args[0],
 		runCmd:  "vim",
