@@ -78,7 +78,7 @@ func (cmd *CommandLine) Draw(x, y, w int, active bool) {
 
 	if active {
 		cmd.input.Draw(x, y, w)
-		termbox.SetCursor(cmd.input.CursorX(), y)
+		termbox.SetCursor(x+cmd.input.CursorX(), y)
 	} else {
 		tclearcolor(x, y, w, 1, cmd.input.bg)
 		tbprint(x, y, cmd.input.fg, cmd.input.bg, cmd.SummarizeCommand(w))

@@ -49,8 +49,9 @@ func main() {
 
 	var rview ResultsView
 	windowWidth, windowHeight := termbox.Size()
+
 	cmdline := NewCommandLine(opts.runCmd)
-	modeline := NewModeline()
+	modeline := NewModeline(opts.folderDisplay)
 
 	idleTimer := time.NewTimer(1 * time.Hour)
 

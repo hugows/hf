@@ -15,16 +15,19 @@ type Modeline struct {
 	paused       bool
 	walkFinished bool
 
+	folder string
+
 	// user input
 	input *Editbox
 }
 
-func NewModeline() *Modeline {
+func NewModeline(folder string) *Modeline {
 	input := new(Editbox)
 	input.fg = termbox.ColorDefault
 	input.bg = termbox.ColorDefault
 	return &Modeline{
-		input: input,
+		input:  input,
+		folder: folder,
 	}
 }
 
@@ -37,9 +40,9 @@ func (m *Modeline) Summarize(results *ResultsView) string {
 	var s string
 
 	if m.walkFinished {
-		s = "(" + strconv.Itoa(sel) + "/" + strconv.Itoa(results.resultCount) + ")"
+		s = strconv.Itoa(sel) + "/" + strconv.Itoa(results.resultCount)
 	} else {
-		s = "(" + strconv.Itoa(sel) + "/?)"
+		s = strconv.Itoa(sel) + "/?"
 		if m.paused {
 			s += " paused"
 		}
@@ -60,12 +63,12 @@ func (m *Modeline) Draw(x, y, w int, results *ResultsView, active bool) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
 
-	summary := m.Summarize(results) //.Summarize(m.paused)
+	text := m.folder + " " + m.Summarize(results) //.Summarize(m.paused)
 
-	tbprint(w-len(summary), y, termbox.ColorCyan|termbox.AttrBold, coldef, summary)
+	tbprint(w-len(text), y, termbox.ColorCyan|termbox.AttrBold, coldef, text)
 
 	// modeline.Draw(2, , w-2, 1)
-	spaceLeft := w - spaceForCursor - len(summary)
+	spaceLeft := w - spaceForCursor - len(text)
 	m.input.Draw(x+spaceForCursor, y, spaceLeft)
 	termbox.SetCell(0, y, '>', coldef, coldef)
 

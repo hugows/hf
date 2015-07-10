@@ -101,6 +101,8 @@ type Options struct {
 	rootDir      string // path to recursively search
 	runCmd       string // initial command to run
 	initialInput string // starting input to speed things up (not implemented)
+
+	folderDisplay string // string to display in modeline
 }
 
 func ParseArgs() (opts *Options, err error) {
@@ -182,6 +184,13 @@ func ParseArgs() (opts *Options, err error) {
 	if withoutLinks, err := filepath.EvalSymlinks(opts.rootDir); err == nil {
 		opts.rootDir = withoutLinks
 	}
+
+	if opts.git {
+		opts.folderDisplay += "git:"
+	} else {
+		opts.folderDisplay += "cwd:"
+	}
+	opts.folderDisplay += opts.rootDir
 
 	return
 }
