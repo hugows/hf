@@ -63,7 +63,12 @@ func (m *Modeline) Draw(x, y, w int, results *ResultsView, active bool) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
 
-	text := m.folder + " " + m.Summarize(results) //.Summarize(m.paused)
+	var text string
+	if w < len(m.folder)*2 {
+		text = m.Summarize(results)
+	} else {
+		text = m.folder + " " + m.Summarize(results)
+	}
 
 	tbprint(w-len(text), y, termbox.ColorCyan|termbox.AttrBold, coldef, text)
 
