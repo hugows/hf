@@ -16,6 +16,7 @@ type CommandLine struct {
 	cmdargs []string
 
 	// use space for showing errors too
+	isActive      bool
 	showingError  bool
 	modelineError string
 
@@ -44,7 +45,6 @@ func (cmd *CommandLine) Update(results ResultArray) {
 		cmd.cmdargs = append(cmd.cmdargs, res.displayContents)
 	}
 
-	cmd.input.text = []byte(cmd.cmd + " $FILES")
 	cmd.input.MoveCursorToBeginningOfTheLine()
 	cmd.fullCmdline = text
 	cmd.summarizedCmdline = fmt.Sprintf("%s <%d files...>", cmd.cmd, len(results))
@@ -69,14 +69,23 @@ func (cmd *CommandLine) ShowError(redraw chan bool, err error) {
 	}()
 }
 
-func (cmd *CommandLine) Draw(x, y, w int, active bool) {
+func (cmd *CommandLine) SetActive(active bool) {
+	cmd.isActive = active
+	if active {
+		cmd.input.text = []byte(" $FILES")
+	} else {
+		cmd.input.text = []byte(cmd.cmd + " $FILES")
+	}
+}
+
+func (cmd *CommandLine) Draw(x, y, w int) {
 	if cmd.showingError {
 		tclearcolor(x, y, w, 1, cmd.input.bg)
 		tbprint(x, y, termbox.ColorRed, cmd.input.bg, cmd.modelineError)
 		return
 	}
 
-	if active {
+	if cmd.isActive {
 		cmd.input.Draw(x, y, w)
 		termbox.SetCursor(x+cmd.input.CursorX(), y)
 	} else {

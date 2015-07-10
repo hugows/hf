@@ -139,6 +139,7 @@ func (m *Editbox) InsertRune(r rune) {
 	n := utf8.EncodeRune(buf[:], r)
 	m.text = byte_slice_insert(m.text, m.cursor_boffset, buf[:n])
 	m.MoveCursorOneRuneForward()
+	// fmt.Println("NEW", buf, string(m.text))
 }
 
 // Please, keep in mind that cursor depends on the value of line_voffset, which

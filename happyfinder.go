@@ -95,7 +95,7 @@ func main() {
 
 	activeEditbox := modeline.input
 	modeline.Draw(0, windowHeight-1, windowWidth, &rview, true)
-	cmdline.Draw(0, windowHeight-2, windowWidth, false)
+	cmdline.Draw(0, windowHeight-2, windowWidth)
 	rview.SetSize(0, 0, windowWidth, windowHeight-2)
 	termbox.Flush()
 
@@ -152,7 +152,7 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					runCmdWithArgs(opts.rootDir, cmdline.cmd, cmdline.cmdargs)
+					runCmdWithArgs(opts.rootDir, cmdline.input.Contents(), cmdline.cmdargs)
 					return
 				case termbox.KeyCtrlT:
 					err := rview.ToggleMarkAll()
@@ -186,6 +186,8 @@ func main() {
 					} else {
 						activeEditbox = modeline.input
 					}
+
+					cmdline.SetActive(activeEditbox == cmdline.input)
 					// reset user edit to keep things simple...
 					cmdline.Update(rview.GetMarkedOrSelected())
 
@@ -194,7 +196,7 @@ func main() {
 						rview.ToggleMark()
 						cmdline.Update(rview.GetMarkedOrSelected())
 					} else {
-						activeEditbox.InsertRune(ev.Ch)
+						activeEditbox.InsertRune(' ') //? why ev.Ch failing??
 					}
 				case termbox.KeyCtrlK:
 					activeEditbox.DeleteTheRestOfTheLine()
@@ -227,7 +229,7 @@ func main() {
 
 		if !skipDraw {
 			modeline.Draw(0, windowHeight-1, windowWidth, &rview, activeEditbox == modeline.input)
-			cmdline.Draw(0, windowHeight-2, windowWidth, activeEditbox == cmdline.input)
+			cmdline.Draw(0, windowHeight-2, windowWidth)
 			rview.Draw()
 			termbox.Flush()
 			stats.Inc("flush")

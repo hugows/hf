@@ -1,10 +1,9 @@
 package main
 
 import (
-	"log"
 	"os"
 	"os/exec"
-	"runtime"
+	"strings"
 )
 
 func runCmdInternal(rundir, cmd string, args []string) error {
@@ -17,28 +16,46 @@ func runCmdInternal(rundir, cmd string, args []string) error {
 	return err
 }
 
-func runCmdWithArgs(rundir, cmd string, args []string) {
-	err := runCmdInternal(rundir, cmd, args)
+func runCmdWithArgs(rundir, rawcmd string, files []string) {
+	words := strings.Split(rawcmd, " ")
 
-	if err != nil {
-		var newcmd string
-		newargs := make([]string, len(args))
-		if runtime.GOOS == "windows" {
-			newcmd = "cmd"
-			newargs = append(newargs, "/c")
+	cmd := words[0]
+	args := make([]string, 0, len(words))
+	for _, w := range words[1:] {
+		if w == "$FILES" {
+			for _, f := range files {
+				args = append(args, f)
+			}
 		} else {
-			newcmd = "sh"
-			newargs = append(newargs, "-c")
-		}
-
-		newargs = append(newargs, cmd)
-		for _, a := range args {
-			newargs = append(newargs, a)
-		}
-
-		err = runCmdInternal(rundir, newcmd, newargs)
-		if err != nil {
-			log.Fatal(err)
+			args = append(args, w)
 		}
 	}
+
+	// fmt.Println("run internal", rawcmd, cmd, words, args)
+	// err := runCmdInternal(rundir, cmd, args)
+	runCmdInternal(rundir, cmd, args)
+
+	// FIX THIS.
+	// if err != nil {
+	// 	var newcmd string
+	// 	newargs := make([]string, len(args))
+	// 	if runtime.GOOS == "windows" {
+	// 		newcmd = "cmd"
+	// 		newargs = append(newargs, "/c")
+	// 	} else {
+	// 		newcmd = "sh"
+	// 		newargs = append(newargs, "-c")
+	// 	}
+
+	// 	newargs = append(newargs, cmd)
+	// 	for _, a := range args {
+	// 		newargs = append(newargs, a)
+	// 	}
+
+	// 	err = runCmdInternal(rundir, newcmd, newargs)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// }
+
 }
