@@ -20,8 +20,8 @@ func walkFiles(root string) <-chan string {
 			}
 
 			abspath, _ := filepath.Abs(path)
-			abspathclean := filepath.Clean(abspath)
-			if _, elem := filepath.Split(abspathclean); elem != "" {
+			// abspathclean := filepath.Clean(abspath)
+			if _, elem := filepath.Split(abspath); elem != "" {
 				// Skip various temporary or "hidden" files or directories.
 				if elem[0] == '.' ||
 					elem[0] == '$' ||
