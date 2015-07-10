@@ -56,4 +56,3 @@ When running:
 ## Issues
 
 - stable sorting problems?
-- only working when tabbing to input, otherwise empty...

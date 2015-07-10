@@ -94,6 +94,7 @@ func main() {
 	}()
 
 	activeEditbox := modeline.input
+	cmdline.SetActive(false)
 	modeline.Draw(0, windowHeight-1, windowWidth, &rview, true)
 	cmdline.Draw(0, windowHeight-2, windowWidth)
 	rview.SetSize(0, 0, windowWidth, windowHeight-2)
