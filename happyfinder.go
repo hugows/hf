@@ -10,7 +10,7 @@ import (
 
 const (
 	pauseAfterKeypress = (1500 * time.Millisecond)
-	redrawPause        = 30 * time.Millisecond
+	redrawPause        = 50 * time.Millisecond
 )
 
 var (
@@ -151,7 +151,6 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					// runCmdWithArgs(opts.rootDir, cmdline.input.Contents())
 					runCmdWithArgs(opts.rootDir, cmdline.cmd, cmdline.cmdargs)
 					return
 				case termbox.KeyCtrlT:

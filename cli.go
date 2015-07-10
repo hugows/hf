@@ -179,5 +179,9 @@ func ParseArgs() (opts *Options, err error) {
 	}
 
 	opts.rootDir = filepath.Clean(opts.rootDir)
+	if withoutLinks, err := filepath.EvalSymlinks(opts.rootDir); err == nil {
+		opts.rootDir = withoutLinks
+	}
+
 	return
 }

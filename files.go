@@ -38,8 +38,12 @@ func walkFiles(root string) <-chan string {
 			}
 			if info != nil && info.Mode()&os.ModeType == 0 {
 				if strings.HasPrefix(path, root) {
-					path = path[len(root)+1:]
+					path = path[len(root):]
+					if os.IsPathSeparator(path[0]) {
+						path = path[1:]
+					}
 				}
+
 				out <- path
 			}
 

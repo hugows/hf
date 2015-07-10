@@ -30,18 +30,29 @@ func NewModeline() *Modeline {
 
 func (m *Modeline) Summarize(results *ResultsView) string {
 	sel := results.result_selected + 1
-	if results.result_count == 0 {
+	if results.resultCount == 0 {
 		sel = 0
 	}
 
-	s := "(" + strconv.Itoa(sel) + "/" + strconv.Itoa(results.result_count)
-	if !m.walkFinished {
-		s += "+"
+	var s string
+
+	if m.walkFinished {
+		s = "(" + strconv.Itoa(sel) + "/" + strconv.Itoa(results.resultCount) + ")"
+	} else {
+		s = "(" + strconv.Itoa(sel) + "/?)"
+		if m.paused {
+			s += " paused"
+		}
+
 	}
-	if m.paused {
-		s += " paused"
-	}
-	s += ")"
+
+	// if !m.walkFinished {
+	// 	s += "?"
+	// }
+	// if m.paused {
+	// 	s += " paused"
+	// }
+	// s += ")"
 	return s
 }
 

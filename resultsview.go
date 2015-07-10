@@ -19,7 +19,7 @@ type ResultsView struct {
 	bottom_result int
 
 	// Total number of results
-	result_count int
+	resultCount int
 
 	// Index of currently selected line
 	result_selected int
@@ -32,10 +32,10 @@ func (r *ResultsView) SelectFirst() {
 	r.result_selected = 0
 	r.top_result = 0
 
-	if r.result_count > r.h {
+	if r.resultCount > r.h {
 		r.bottom_result = r.h
 	} else {
-		r.bottom_result = r.result_count
+		r.bottom_result = r.resultCount
 	}
 }
 
@@ -50,7 +50,7 @@ func (r *ResultsView) SelectPrevious() {
 }
 
 func (r *ResultsView) SelectNext() {
-	if r.result_selected < (r.result_count - 1) {
+	if r.result_selected < (r.resultCount - 1) {
 		r.result_selected++
 
 		if r.result_selected >= r.bottom_result {
@@ -80,7 +80,7 @@ func (r *ResultsView) Draw() {
 }
 
 func (r *ResultsView) ToggleMark() {
-	if r.result_count > 0 {
+	if r.resultCount > 0 {
 		r.results[r.result_selected].marked = !r.results[r.result_selected].marked
 		r.SelectNext()
 	}
@@ -100,16 +100,16 @@ func (r *ResultsView) SetSize(x, y, w, h int) {
 	r.x, r.y, r.w, r.h = x, y, w, h
 
 	r.top_result = 0
-	if r.result_count > r.h {
+	if r.resultCount > r.h {
 		r.bottom_result = r.h
 	} else {
-		r.bottom_result = r.result_count
+		r.bottom_result = r.resultCount
 	}
 }
 
 func (r *ResultsView) Update(results ResultArray) {
 	r.results = results
-	r.result_count = len(results)
+	r.resultCount = len(results)
 	r.SetSize(r.x, r.y, r.w, r.h)
 
 }

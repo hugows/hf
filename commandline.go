@@ -43,7 +43,8 @@ func (cmd *CommandLine) Update(results ResultArray) {
 		text = text + " " + res.displayContents
 		cmd.cmdargs = append(cmd.cmdargs, res.displayContents)
 	}
-	cmd.input.text = []byte(text)
+
+	cmd.input.text = []byte(cmd.cmd + " $FILES")
 	cmd.input.MoveCursorToBeginningOfTheLine()
 	cmd.fullCmdline = text
 	cmd.summarizedCmdline = fmt.Sprintf("%s <%d files...>", cmd.cmd, len(results))
