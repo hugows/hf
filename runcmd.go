@@ -37,6 +37,10 @@ func expandInArray(arr []string, when string, with []string) []string {
 	return expanded
 }
 
+// On OSX, both shell=true and shell=false work w/ GUI apps. Both work with text vim too.
+// On Windows, I think GUI apps will lock the command prompt if shell=false (CHECK).
+//
+// Are there any disadvantadges in always using shell=true?
 func runCmdWithArgs(dir string, userCommand string, shell bool, files []string) error {
 	var cmd []string
 
