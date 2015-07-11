@@ -2,9 +2,9 @@
 
 hf is a command line utility to quickly find files and execute a command - something like Helm/Anything/CtrlP for the terminal.
 
-Maybe its better to see it in action:
+Here is it in action:
 
-![happyfinder on windows](https://dl.dropboxusercontent.com/u/19746944/hf_win.gif)
+![happyfinder on osx](http://g.recordit.co/bWae8XRKMV.gif)
 
 If you have any suggestions, please open an issue!
 
@@ -52,7 +52,3 @@ When running:
     RET         Run command
     ESC         Quit
 ```
-
-## Issues
-
-- stable sorting problems?
