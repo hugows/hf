@@ -3,12 +3,14 @@ package main
 import (
 	"os"
 	"os/exec"
+	"runtime"
+	"strconv"
 	"strings"
 )
 
-func runCmdInternal(rundir, cmd string, args []string) error {
-	exec := exec.Command(cmd, args...)
-	exec.Dir = rundir
+func runCmdInternal(dir string, cmd []string) error {
+	exec := exec.Command(cmd[0], cmd[1:]...)
+	exec.Dir = dir
 	exec.Stdin = os.Stdin
 	exec.Stdout = os.Stdout
 	exec.Stderr = os.Stderr
@@ -16,46 +18,45 @@ func runCmdInternal(rundir, cmd string, args []string) error {
 	return err
 }
 
-func runCmdWithArgs(rundir, rawcmd string, files []string) {
-	words := strings.Split(rawcmd, " ")
+// receives
+//   ["git add $FILES", "$FILES", ["a","b"] ]
+// returns
+//   ["git", "add", "a", "b"]
+func expandInArray(arr []string, when string, with []string) []string {
+	expanded := make([]string, 0, len(arr))
 
-	cmd := words[0]
-	args := make([]string, 0, len(words))
-	for _, w := range words[1:] {
-		if w == "$FILES" {
-			for _, f := range files {
-				args = append(args, f)
+	for _, e := range arr {
+		if e == when {
+			for _, arg := range with {
+				expanded = append(expanded, arg)
 			}
 		} else {
-			args = append(args, w)
+			expanded = append(expanded, e)
 		}
 	}
+	return expanded
+}
 
-	// fmt.Println("run internal", rawcmd, cmd, words, args)
-	// err := runCmdInternal(rundir, cmd, args)
-	runCmdInternal(rundir, cmd, args)
+func runCmdWithArgs(dir string, userCommand string, shell bool, files []string) error {
+	var cmd []string
 
-	// FIX THIS.
-	// if err != nil {
-	// 	var newcmd string
-	// 	newargs := make([]string, len(args))
-	// 	if runtime.GOOS == "windows" {
-	// 		newcmd = "cmd"
-	// 		newargs = append(newargs, "/c")
-	// 	} else {
-	// 		newcmd = "sh"
-	// 		newargs = append(newargs, "-c")
-	// 	}
+	if shell {
+		if runtime.GOOS == "windows" {
+			cmd = []string{"cmd", "/c"}
+		} else {
+			cmd = []string{"sh", "-cr"}
+		}
+		quotedFiles := make([]string, len(files))
+		for i, f := range files {
+			quotedFiles[i] = strconv.Quote(f)
+		}
+		filesString := strings.Join(quotedFiles, " ")
+		cmdReplaced := strings.Replace(userCommand, "$FILES", filesString, -1)
+		cmd = append(cmd, cmdReplaced)
+	} else {
+		cmd = strings.Split(userCommand, " ")
+		cmd = expandInArray(cmd, "$FILES", files)
+	}
 
-	// 	newargs = append(newargs, cmd)
-	// 	for _, a := range args {
-	// 		newargs = append(newargs, a)
-	// 	}
-
-	// 	err = runCmdInternal(rundir, newcmd, newargs)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// }
-
+	return runCmdInternal(dir, cmd)
 }
