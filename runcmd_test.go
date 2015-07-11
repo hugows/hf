@@ -13,12 +13,6 @@ func TestRuncmdSimple(t *testing.T) {
 	}
 }
 
-// func TestRuncmdGUI(t *testing.T) {
-// 	if err := runCmdWithArgs("test", "subl $FILES", FILES); err != nil {
-// 		t.FailNow()
-// 	}
-// }
-
 func TestRuncmdPiped(t *testing.T) {
 	if err := runCmdWithArgs("test", "cat $FILES | wc -l", true, FILES); err != nil {
 		fmt.Println(err)

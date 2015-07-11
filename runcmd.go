@@ -48,7 +48,7 @@ func runCmdWithArgs(dir string, userCommand string, shell bool, files []string) 
 		if runtime.GOOS == "windows" {
 			cmd = []string{"cmd", "/c"}
 		} else {
-			cmd = []string{"sh", "-cr"}
+			cmd = []string{"sh", "-c"}
 		}
 		quotedFiles := make([]string, len(files))
 		for i, f := range files {
