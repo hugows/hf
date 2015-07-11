@@ -81,15 +81,18 @@ Examples:
     hfg rm
     hf . rm
 
-When running:
+Inside the app:
     a-z0-9      Edit input string (those also work: backspace/C-a/C-e/C-k/Home/End)
     Up/down     Move cursor to next file
     Space       Toggle mark for current file and move to next
-    C-t         Toggle mark for all files
-    C-s         Toggle "run in a new shell" option
+    C-t         Toggle mark for all files 
+    C-s         Toggle "run command in shell"
     TAB         Jump to edit command (and back)
     RET         Run command
     ESC         Quit
+
+When editing the command, the string $FILES is special and will
+replaced by the select (or marked) files, properly quoted.
 
 `
 

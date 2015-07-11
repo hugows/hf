@@ -29,6 +29,7 @@ func NewModeline(folder string) *Modeline {
 	return &Modeline{
 		input:  input,
 		folder: folder,
+		shell:  true,
 	}
 }
 
