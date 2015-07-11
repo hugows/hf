@@ -153,7 +153,7 @@ func main() {
 					return
 				case termbox.KeyEnter:
 					termbox.Close()
-					runCmdWithArgs(opts.rootDir, cmdline.input.Contents(), true, cmdline.cmdargs)
+					runCmdWithArgs(opts.rootDir, cmdline.input.Contents(), modeline.shell, cmdline.cmdargs)
 					return
 				case termbox.KeyCtrlT:
 					err := rview.ToggleMarkAll()
@@ -199,6 +199,8 @@ func main() {
 					} else {
 						activeEditbox.InsertRune(' ') //? why ev.Ch failing??
 					}
+				case termbox.KeyCtrlS:
+					modeline.ToggleShell()
 				case termbox.KeyCtrlK:
 					activeEditbox.DeleteTheRestOfTheLine()
 					if activeEditbox == modeline.input {

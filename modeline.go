@@ -16,6 +16,7 @@ type Modeline struct {
 	walkFinished bool
 
 	folder string
+	shell  bool
 
 	// user input
 	input *Editbox
@@ -63,11 +64,15 @@ func (m *Modeline) Draw(x, y, w int, results *ResultsView, active bool) {
 	coldef := termbox.ColorDefault
 	spaceForCursor := 2
 
-	var text string
+	text := ""
+	if m.shell {
+		text = "shell "
+	}
+
 	if w < len(m.folder)*2 {
-		text = m.Summarize(results)
+		text = text + m.Summarize(results)
 	} else {
-		text = m.folder + " " + m.Summarize(results)
+		text = text + m.folder + " " + m.Summarize(results)
 	}
 
 	tbprint(w-len(text), y, termbox.ColorCyan|termbox.AttrBold, coldef, text)
@@ -84,6 +89,10 @@ func (m *Modeline) Draw(x, y, w int, results *ResultsView, active bool) {
 
 func (m *Modeline) Contents() string {
 	return strings.ToLower(string(m.input.text))
+}
+
+func (m *Modeline) ToggleShell() {
+	m.shell = !m.shell
 }
 
 func (m *Modeline) FlagPause(b bool) {

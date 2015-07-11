@@ -86,6 +86,7 @@ When running:
     Up/down     Move cursor to next file
     Space       Toggle mark for current file and move to next
     C-t         Toggle mark for all files
+    C-s         Toggle "run in a new shell" option
     TAB         Jump to edit command (and back)
     RET         Run command
     ESC         Quit
