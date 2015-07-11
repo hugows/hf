@@ -1,16 +1,16 @@
 # happyfinder [![Build Status](https://travis-ci.org/hugows/hf.svg?branch=master)](https://travis-ci.org/hugows/hf)
 
-hf is a command line utility to quickly find files and execute a command - something like Helm/Anything/CtrlP for the terminal.
+hf is a command line utility to quickly find files and execute a command - something like Helm/Anything/CtrlP for the terminal. It tries to find the best match, like other fuzzy finders (Sublime, ido, Helm).
 
 Here is it in action:
 
 ![happyfinder on osx](http://g.recordit.co/bWae8XRKMV.gif)
 
-If you have any suggestions, please open an issue!
+If you have any suggestions, please open an issue.
 
 ## Installation
 
-You should be able to install (and update) /happyfinder/ with the command:
+If you have Go configured in your system, you should be able to install (and update) happyfinder with the command:
 
 ```
 go get -u github.com/hugows/hf
@@ -19,7 +19,7 @@ go get -u github.com/hugows/hf
 ## Usage
 
 ```
-Use happyfinder like this:
+The basic command is:
 
   hf [path] [command]
 
@@ -43,12 +43,16 @@ Examples:
     hfg rm
     hf . rm
 
-When running:
+Inside the app:
     a-z0-9      Edit input string (those also work: backspace/C-a/C-e/C-k/Home/End)
     Up/down     Move cursor to next file
     Space       Toggle mark for current file and move to next
-    C-t         Toggle mark for all files
+    C-t         Toggle mark for all files 
+    C-s         Toggle "run command in shell"
     TAB         Jump to edit command (and back)
     RET         Run command
     ESC         Quit
+
+When editing the command, the string $FILES is special and will
+replaced by the select (or marked) files, properly quoted.
 ```
