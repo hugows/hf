@@ -6,6 +6,8 @@ import (
 	"github.com/nsf/termbox-go"
 )
 
+var ScrollOff = 5
+
 type ResultsView struct {
 	// Array of results to be filtered
 	// initialset ResultArray
@@ -43,7 +45,7 @@ func (r *ResultsView) SelectPrevious() {
 	if r.result_selected > 0 {
 		r.result_selected--
 	}
-	if r.top_result > 0 {
+	if r.top_result > 0 && r.result_selected < r.top_result+ScrollOff {
 		r.top_result--
 		r.bottom_result--
 	}
@@ -53,7 +55,7 @@ func (r *ResultsView) SelectNext() {
 	if r.result_selected < (r.resultCount - 1) {
 		r.result_selected++
 
-		if r.result_selected >= r.bottom_result {
+		if r.result_selected >= r.bottom_result-ScrollOff && r.bottom_result < r.resultCount {
 			r.top_result++
 			r.bottom_result++
 		}
