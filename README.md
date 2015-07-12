@@ -8,6 +8,19 @@ Here is it in action:
 
 If you have any suggestions, please open an issue.
 
+## Similar projects
+
+This project wasn't implemented as an improvement to any of the projects below - I only knew about the text editor plugins (Anything, Helm, CtrlP, Sublime's native matching...)
+
+I just wanted to write something useful for me, using termbox-go, a great library for creating terminal-based apps.
+
+Those projects follow the Unix way in the sense they don't reimplement the "find files recursively" part. That is probably more elegant solution, but I always wanted hf to work on Windows.
+
+- [fzf is a blazing fast command-line fuzzy finder written in Go](https://github.com/junegunn/fzf)
+- [Selecta is a fuzzy text selector for files and anything else you need to select](https://github.com/garybernhardt/selecta/)
+- [Pick is "just like Selecta, but faster"](https://robots.thoughtbot.com/announcing-pick)
+- [icepick is a reimplementation of Selecta in Rust](https://github.com/felipesere/icepick)
+
 ## Installation
 
 If you have Go configured in your system, you should be able to install (and update) happyfinder with the command:
