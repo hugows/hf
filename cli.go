@@ -57,12 +57,13 @@ func findGitRoot(path string) (bool, string) {
 	return false, ""
 }
 
-const usage string = `Use happyfinder like this:
+const usage string = `The basic command is:
 
   hf [path] [command]
 
 The default path is the current folder.
-The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim (subl on Windows).
+The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim 
+(subl on Windows).
 
 To find in your git project, use:
 
@@ -72,6 +73,11 @@ To find in your git project, use:
 
 If the binary name is 'hfg', the -git option is assumed.
 This was done because Windows users have no easy way of creating command aliases.
+
+A -cmd=<yourcmd> option is provided to simplify aliases. For example, I defined 
+iga (interactive git add) like this:
+
+alias iga='hf -cmd="git add"'
 
 Examples:
     hf
@@ -97,14 +103,11 @@ replaced by the select (or marked) files, properly quoted.
 `
 
 type Options struct {
-	debug     bool // debug mode (print stats when closing, etc)
-	fakefiles int  // generate fake filenames for testing performance
-
-	git          bool   // user wants to search in git project
-	command      string // name of binary
-	rootDir      string // path to recursively search
-	runCmd       string // initial command to run
-	initialInput string // starting input to speed things up (not implemented)
+	debug     bool   // debug mode (print stats when closing, etc)
+	fakefiles int    // generate fake filenames for testing performance
+	git       bool   // user wants to search in git project
+	rootDir   string // path to recursively search
+	runCmd    string // initial command to run
 
 	folderDisplay string // string to display in modeline
 }
@@ -115,6 +118,7 @@ func ParseArgs() (opts *Options, err error) {
 	}
 
 	git := flag.Bool("git", false, "Find in current git project instead of folder")
+	cmd := flag.String("cmd", "", "Command to run (alternate syntax to simplify alias)")
 	debug := flag.Bool("debug", false, "Print stats in the end (debug only)")
 	fakefiles := flag.Int("fakefiles", 0, "Generate N fake file names for testing")
 
@@ -124,12 +128,13 @@ func ParseArgs() (opts *Options, err error) {
 		debug:     *debug,
 		fakefiles: *fakefiles,
 		git:       *git,
-		command:   os.Args[0],
-		runCmd:    "vim",
+		runCmd:    "",
+		rootDir:   ".",
 	}
 
 	// this is hacky :(
-	if strings.HasSuffix(opts.command, "hfg") || strings.HasSuffix(opts.command, "hfg.exe") {
+	command := os.Args[0]
+	if strings.HasSuffix(command, "hfg") || strings.HasSuffix(command, "hfg.exe") {
 		opts.git = true
 	}
 
@@ -150,38 +155,25 @@ func ParseArgs() (opts *Options, err error) {
 		defaultEditor = "vim"
 	}
 	defaultCmd := firstNonEmpty([]string{os.Getenv("GIT_EDITOR"), os.Getenv("EDITOR"), defaultEditor})
-	opts.runCmd = defaultCmd
+	hasCmd := (*cmd != "")
 
-	switch len(flag.Args()) {
-	case 0:
-		if !opts.git {
-			opts.rootDir = "."
-		}
-	case 1:
-		if opts.git {
-			opts.runCmd = flag.Arg(0)
-		} else {
-			opts.rootDir = flag.Arg(0)
-		}
-	case 2:
-		if opts.git {
-			opts.runCmd = flag.Arg(0)
-			opts.initialInput = flag.Arg(1)
-		} else {
-			opts.rootDir = flag.Arg(0)
-			opts.runCmd = flag.Arg(1)
-		}
-	case 3:
-		if opts.git {
-			err = errors.New("Could not parse options")
-			return
-		} else {
-			opts.rootDir = flag.Arg(0)
-			opts.runCmd = flag.Arg(1)
-			opts.initialInput = flag.Arg(2)
-		}
-	default:
+	if *cmd != "" {
+		opts.runCmd = *cmd
+	} else {
+		opts.runCmd = defaultCmd
+	}
+
+	argLen := len(flag.Args())
+
+	if argLen >= 3 || (argLen == 2 && (opts.git || hasCmd)) || (argLen == 1 && opts.git && hasCmd) {
 		err = errors.New("Could not parse options")
+	} else if opts.git && !hasCmd && argLen == 1 {
+		opts.runCmd = flag.Arg(0)
+	} else if !opts.git && argLen == 1 {
+		opts.rootDir = flag.Arg(0)
+	} else if !opts.git && !hasCmd && argLen == 2 {
+		opts.rootDir = flag.Arg(0)
+		opts.runCmd = flag.Arg(1)
 	}
 
 	opts.rootDir = filepath.Clean(opts.rootDir)

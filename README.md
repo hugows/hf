@@ -10,7 +10,8 @@ If you have any suggestions, please open an issue.
 
 ## Installation
 
-If you have Go configured in your system, you should be able to install (and update) happyfinder with the command:
+If you have Go configured in your system, you should be able to install 
+(and update) happyfinder with the command:
 
 ```
 go get -u github.com/hugows/hf
@@ -24,7 +25,8 @@ The basic command is:
   hf [path] [command]
 
 The default path is the current folder.
-The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim (subl on Windows).
+The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim 
+(subl on Windows).
 
 To find in your git project, use:
 
@@ -34,6 +36,11 @@ To find in your git project, use:
 
 If the binary name is 'hfg', the -git option is assumed.
 This was done because Windows users have no easy way of creating command aliases.
+
+A -cmd=<yourcmd> option is provided to simplify aliases. For example, I defined 
+iga (interactive git add) like this:
+
+alias iga='hf -cmd="git add"'
 
 Examples:
     hf
