@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
@@ -54,9 +55,19 @@ func runCmdWithArgs(dir string, userCommand string, shell bool, files []string) 
 		for i, f := range files {
 			quotedFiles[i] = strconv.Quote(f)
 		}
-		filesString := strings.Join(quotedFiles, " ")
+		var filesString string
+
+		// quotedFiles doesn't run on Windows.
+		// Temporary fix, but won't work with filenames with spaces.
+		if runtime.GOOS == "windows" {
+			filesString = strings.Join(files, " ")
+		} else {
+			filesString = strings.Join(quotedFiles, " ")
+		}
+
 		cmdReplaced := strings.Replace(userCommand, "$FILES", filesString, -1)
 		cmd = append(cmd, cmdReplaced)
+		fmt.Println(cmd)
 	} else {
 		cmd = strings.Split(userCommand, " ")
 		cmd = expandInArray(cmd, "$FILES", files)
