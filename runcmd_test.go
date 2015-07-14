@@ -10,17 +10,14 @@ import (
 var FILES = []string{"a", "b", "space jam"}
 
 func TestRuncmdSimple(t *testing.T) {
+	cmd := "cat $FILES"
 
-	if err := runCmdWithArgs("test", "cat $FILES", false, FILES); err != nil {
-		fmt.Println(err)
+	// Test without shell	
+	if err := runCmdWithArgs("test", cmd, false, FILES); err != nil {
 		t.FailNow()
 	}
 
-	// I'm not sure if you wanted both tests ran on linux, and only the latter
-	// in windows.
-
-	cmd := "cat $FILES"
-
+	// Test with shell (cmd /c on windows, sh -c on linux/osx)
 	if err := runCmdWithArgs("test", cmd, true, FILES); err != nil {
 		t.FailNow()
 	}
