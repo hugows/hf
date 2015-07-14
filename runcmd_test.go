@@ -2,17 +2,14 @@
 
 package main
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
 var FILES = []string{"a", "b", "space jam"}
 
 func TestRuncmdSimple(t *testing.T) {
 	cmd := "cat $FILES"
 
-	// Test without shell	
+	// Test without shell
 	if err := runCmdWithArgs("test", cmd, false, FILES); err != nil {
 		t.FailNow()
 	}
