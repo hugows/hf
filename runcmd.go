@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	// "strconv"
+	"strconv"
 	"strings"
 )
 
@@ -52,7 +52,15 @@ func runCmdWithArgs(dir string, userCommand string, shell bool, files []string) 
 		if runtime.GOOS == "windows" {
 			cmd = append([]string{"cmd", "/c"}, cmd...)
 		} else {
-			cmd = append([]string{"sh", "-c"}, cmd...)
+			cmd = []string{"sh", "-c"}
+
+			quotedFiles := make([]string, len(files))
+			for i, f := range files {
+				quotedFiles[i] = strconv.Quote(f)
+			}
+			filesString := strings.Join(quotedFiles, " ")
+			cmdReplaced := strings.Replace(userCommand, "$FILES", filesString, -1)
+			cmd = append(cmd, cmdReplaced)
 		}
 	}
 
