@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"os/exec"
 )
 
 func firstNonEmpty(arr []string) string {
@@ -62,7 +63,7 @@ const usage string = `The basic command is:
   hf [path] [command]
 
 The default path is the current folder.
-The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim 
+The default command is the first valid of $GIT_EDITOR, $EDITOR, or vim
 (subl on Windows).
 
 To find in your git project, use:
@@ -74,7 +75,7 @@ To find in your git project, use:
 If the binary name is 'hfg', the -git option is assumed.
 This was done because Windows users have no easy way of creating command aliases.
 
-A -cmd=<yourcmd> option is provided to simplify aliases. For example, I defined 
+A -cmd=<yourcmd> option is provided to simplify aliases. For example, I defined
 iga (interactive git add) like this:
 
 alias iga='hf -cmd="git add"'
@@ -91,7 +92,7 @@ Inside the app:
     a-z0-9      Edit input string (those also work: backspace/C-a/C-e/C-k/Home/End)
     Up/down     Move cursor to next file
     Space       Toggle mark for current file and move to next
-    C-t         Toggle mark for all files 
+    C-t         Toggle mark for all files
     C-s         Toggle "run command in shell"
     TAB         Jump to edit command (and back)
     RET         Run command
@@ -110,6 +111,11 @@ type Options struct {
 	runCmd    string // initial command to run
 
 	folderDisplay string // string to display in modeline
+}
+
+func commandExists(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
 }
 
 func ParseArgs() (opts *Options, err error) {
@@ -150,11 +156,16 @@ func ParseArgs() (opts *Options, err error) {
 
 	var defaultEditor string
 	if runtime.GOOS == "windows" {
-		defaultEditor = "subl"
+		if commandExists("subl") {
+			defaultEditor = "subl"
+		 } else {
+			defaultEditor = "notepad"
+		}
 	} else {
 		defaultEditor = "vim"
 	}
 	defaultCmd := firstNonEmpty([]string{os.Getenv("GIT_EDITOR"), os.Getenv("EDITOR"), defaultEditor})
+
 	hasCmd := (*cmd != "")
 
 	if *cmd != "" {
