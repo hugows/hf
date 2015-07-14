@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"os"
 	"os/exec"
 	"runtime"
-	"strconv"
+	// "strconv"
 	"strings"
 )
 
@@ -45,32 +45,15 @@ func expandInArray(arr []string, when string, with []string) []string {
 func runCmdWithArgs(dir string, userCommand string, shell bool, files []string) error {
 	var cmd []string
 
+	cmd = strings.Split(userCommand, " ")
+	cmd = expandInArray(cmd, "$FILES", files)
+
 	if shell {
 		if runtime.GOOS == "windows" {
-			cmd = []string{"cmd", "/c"}
+			cmd = append([]string{"cmd", "/c"}, cmd...)
 		} else {
-			cmd = []string{"sh", "-c"}
+			cmd = append([]string{"sh", "-c"}, cmd...)
 		}
-		quotedFiles := make([]string, len(files))
-		for i, f := range files {
-			quotedFiles[i] = strconv.Quote(f)
-		}
-		var filesString string
-
-		// quotedFiles doesn't run on Windows.
-		// Temporary fix, but won't work with filenames with spaces.
-		if runtime.GOOS == "windows" {
-			filesString = strings.Join(files, " ")
-		} else {
-			filesString = strings.Join(quotedFiles, " ")
-		}
-
-		cmdReplaced := strings.Replace(userCommand, "$FILES", filesString, -1)
-		cmd = append(cmd, cmdReplaced)
-		fmt.Println(cmd)
-	} else {
-		cmd = strings.Split(userCommand, " ")
-		cmd = expandInArray(cmd, "$FILES", files)
 	}
 
 	return runCmdInternal(dir, cmd)

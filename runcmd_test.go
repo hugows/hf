@@ -9,8 +9,13 @@ var FILES = []string{"a", "b", "space jam"}
 
 func TestRuncmdSimple(t *testing.T) {
 	if err := runCmdWithArgs("test", "cat $FILES", false, FILES); err != nil {
+        fmt.Println(err)
 		t.FailNow()
 	}
+    if err := runCmdWithArgs("test", "cat $FILES", true, FILES); err != nil {
+        fmt.Println(err)
+        t.FailNow()
+    }
 }
 
 func TestRuncmdPiped(t *testing.T) {
