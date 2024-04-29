@@ -25,7 +25,7 @@ If you have Go configured in your system, you should be able to install
 (and update) happyfinder with the command:
 
 ```
-go get -u github.com/hugows/hf
+go install github.com/hugows/hf@latest
 ```
 
 ## Usage
